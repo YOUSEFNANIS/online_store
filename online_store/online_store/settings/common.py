@@ -29,9 +29,10 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'users.authenticate.CookieJWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'online_store.pagination.CustomPagination',
-    'PAGE_SIZE': 10
+    # 'DEFAULT_PAGINATION_CLASS': 'online_store.pagination.CustomPagination',
+    # 'PAGE_SIZE': 10
 }
 
 MIDDLEWARE = [

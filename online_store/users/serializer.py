@@ -40,8 +40,8 @@ class seller_serializer(serializers.ModelSerializer):
             )
             return seller.objects.create(user=user, store_name=store_name)
     
-    def validate_password(self, data):
-        password = '' + data['password']
+    def validate_password(self, password):
+  
         if len(password) < 8:
             raise serializers.ValidationError('password is too short')
         if not re.search(r"[A-Z]", password):
@@ -53,7 +53,7 @@ class seller_serializer(serializers.ModelSerializer):
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
             raise serializers.ValidationError("Password must contain at least one special character.")
         
-        return data
+        return password
     def validate(self, attrs):
         print(attrs)
         if hasattr(attrs, 'password'):

@@ -6,13 +6,14 @@ from . import models
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
-from users.permissions import IsSeller, IsCustomer, IsOwner
+from users.permissions import IsSeller, IsCustomer, IsOwner, IsCartItemOwner
 from . import filters as customFilters
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from rest_framework.views import APIView
 from .tasks import message_seller
 from online_store.pagination import CustomPagination
+
 class SendOrderReceiptView(APIView):
     def post(self, request, *args, **kwargs):
         
@@ -48,6 +49,8 @@ class productViewset(ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
     pagination_class = CustomPagination
+    permission_classes = [IsSeller]
+
     def get_queryset(self):
         user = self.request.user
         if hasattr(user, 'seller'):
@@ -59,6 +62,7 @@ class orderViewset(ModelViewSet):
     serializer_class = serializer.order_serializer
     filter_backends = [customFilters.DjangoFilterBackend]
     filterset_class = customFilters.OrderFilter
+    permission_classes = [IsOwner]
     pagination_class = CustomPagination
     def get_queryset(self):
         
@@ -75,13 +79,17 @@ class orderViewset(ModelViewSet):
         instance = self.get_object()
         
         if instance.order_status in ['completed', 'cancelled']:
-                    raise ValidationError("Cannot modify finalized order")
+            return Response({'detail': 'order is in the final state'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
                     
     
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         
         if hasattr(request.user, 'seller'):
+            serializer.save()
+            return response.Response(serializer.data, status=status.HTTP_200_OK)
+        
+        if hasattr(serializer.validated_data, 'order_status')==False:
             serializer.save()
             return response.Response(serializer.data, status=status.HTTP_200_OK)
         
@@ -120,7 +128,7 @@ class cart(ModelViewSet):
     
 class cartItem(ModelViewSet):
     serializer_class = serializer.cartItem_serializer
-    permission_classes = [IsOwner]
+    permission_classes = [IsCartItemOwner, IsCustomer]
     
     def get_queryset(self):
         user = self.request.user

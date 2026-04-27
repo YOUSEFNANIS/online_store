@@ -11,7 +11,7 @@ class image_serializer(serializers.ModelSerializer):
 class product_serialzer(serializers.ModelSerializer):
     images = image_serializer(many=True, read_only=True)
     id = serializers.UUIDField(read_only=True)
-    store_name = serializers.CharField(source='seller.store_name')
+    store_name = serializers.CharField(source='seller.store_name', read_only=True)
     class Meta:
         model = models.product
         fields = ['id', 'description', 'price', 'images', 'name', 'inventory', 'store_name']
@@ -104,10 +104,10 @@ class cartItem_serializer(serializers.ModelSerializer):
     class Meta:
         model = models.cart_item
         fields = [
-            'id',          # cart item id
-            'cart',        # cart id
+            'id', 
+            'cart',
             'product',
-            'price',     # product id (used for POST)
+            'price',
             'product_name',
             'first_image',
             'quantity'
