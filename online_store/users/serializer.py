@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import customer, seller, User
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from django.db import transaction
-import re
+from online_store.validator import validate_password
 
 class seller_serializer(serializers.ModelSerializer):
 
@@ -40,24 +40,10 @@ class seller_serializer(serializers.ModelSerializer):
             )
             return seller.objects.create(user=user, store_name=store_name)
     
-    def validate_password(self, password):
-  
-        if len(password) < 8:
-            raise serializers.ValidationError('password is too short')
-        if not re.search(r"[A-Z]", password):
-            raise serializers.ValidationError('Password must contain at least upper case character')
-        if not re.search(r"[a-z]", password):
-            raise serializers.ValidationError('Password must contain at least 1 character')
-        if not re.search(r"[0-9]", password):
-            raise serializers.ValidationError("Password must contain at least one digit.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise serializers.ValidationError("Password must contain at least one special character.")
-        
-        return password
+    
     def validate(self, attrs):
-        print(attrs)
         if hasattr(attrs, 'password'):
-            self.validate_password(attrs)
+            validate_password(attrs)
 
         return super().validate(attrs)
 
@@ -94,22 +80,8 @@ class customer_serializer(serializers.ModelSerializer):
             )
             return customer.objects.create(user=user)
     
-    def validate_password(self, data):
-        password = data['password']
-        if len(password) < 8:
-            raise serializers.ValidationError('password is too short')
-        if not re.search(r"[A-Z]", password):
-            raise serializers.ValidationError('Password must contain at least upper case character')
-        if not re.search(r"[a-z]", password):
-            raise serializers.ValidationError('Password must contain at least 1 character')
-        if not re.search(r"[0-9]", password):
-            raise serializers.ValidationError("Password must contain at least one digit.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise serializers.ValidationError("Password must contain at least one special character.")
-        
-        return data
     def validate(self, attrs):
         if hasattr(attrs, 'password'):
-            self.validate_password(attrs)
+            validate_password(attrs)
 
         return super().validate(attrs)

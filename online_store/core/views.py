@@ -6,7 +6,7 @@ from . import models
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
-from users.permissions import IsSeller, IsCustomer, IsOwner, IsCartItemOwner
+from online_store.online_store.permissions import IsSeller, IsCustomer, IsOwner, IsCartItemOwner
 from . import filters as customFilters
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
