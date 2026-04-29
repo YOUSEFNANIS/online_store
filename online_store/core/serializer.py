@@ -10,7 +10,6 @@ class image_serializer(serializers.ModelSerializer):
 
 class product_serialzer(serializers.ModelSerializer):
     images = image_serializer(many=True, read_only=True)
-    id = serializers.UUIDField(read_only=True)
     store_name = serializers.CharField(source='seller.store_name', read_only=True)
     class Meta:
         model = models.product
@@ -26,7 +25,6 @@ class product_serialzer(serializers.ModelSerializer):
 class order_serializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer', read_only=True)
     store_name = serializers.CharField(source='seller.store_name', read_only=True)
-    id = serializers.UUIDField(read_only=True)
     total_quantity = serializers.SerializerMethodField(read_only=True)
     creation_date = serializers.DateTimeField(format="%Y %b %d, %H:%M", read_only=True)
     class Meta:

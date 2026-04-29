@@ -13,6 +13,9 @@ from django.core.mail import send_mail
 from rest_framework.views import APIView
 from .tasks import message_seller
 from online_store.pagination import CustomPagination
+from django.core.cache import cache
+from django.utils import decorators
+from django.views.decorators.cache import cache_page
 
 class SendOrderReceiptView(APIView):
     def post(self, request, *args, **kwargs):
@@ -53,11 +56,21 @@ class productViewset(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = models.product.objects.prefetch_related('images')
         if hasattr(user, 'seller'):
-            seller = models.seller.objects.get(user=user)
-            return models.product.objects.filter(seller=seller)
-        return models.product.objects.all()
+            return queryset.filter(seller=user.seller)
+        
+        return queryset
 
+    def list(self, request, *args, **kwargs):
+        cache_key = f"products:{request.get_full_path()}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, timeout=60)
+        return response
+    
 class orderViewset(ModelViewSet):
     serializer_class = serializer.order_serializer
     filter_backends = [customFilters.DjangoFilterBackend]

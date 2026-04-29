@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
+    #"debug_toolbar",
 ]
 
 
@@ -31,13 +32,14 @@ REST_FRAMEWORK = {
         'users.authenticate.CookieJWTAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # 'DEFAULT_PAGINATION_CLASS': 'online_store.pagination.CustomPagination',
-    # 'PAGE_SIZE': 10
+    'DEFAULT_PAGINATION_CLASS': 'online_store.pagination.CustomPagination',
+    'PAGE_SIZE': 10
 }
 
 MIDDLEWARE = [
     #'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    #"debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -47,6 +49,16 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'online_store.urls'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
 
 TEMPLATES = [
     {
@@ -63,6 +75,9 @@ TEMPLATES = [
     },
 ]
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 WSGI_APPLICATION = 'online_store.wsgi.application'
 
 AUTH_USER_MODEL = 'users.User'

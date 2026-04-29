@@ -1,3 +1,4 @@
 online_store/online_store/settings/dev.py
 .vscode/
 online_store/media/
+online_store/locustfile

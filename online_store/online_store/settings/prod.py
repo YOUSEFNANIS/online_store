@@ -14,7 +14,7 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=3),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
     'AUTH_COOKIE': 'access_token',  # Name of the cookie
     'AUTH_COOKIE_HTTP_ONLY': True,  # Prevents JS from reading the cookie
