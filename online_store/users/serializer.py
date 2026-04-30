@@ -1,11 +1,10 @@
-from rest_framework.serializers import ModelSerializer
+from django.db import transaction
 from rest_framework import serializers
 from .models import customer, seller, User
-from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
-from django.db import transaction
 from online_store.validator import validate_password
 
-class seller_serializer(serializers.ModelSerializer):
+
+class SellerSerializer(serializers.ModelSerializer):
 
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
@@ -47,7 +46,7 @@ class seller_serializer(serializers.ModelSerializer):
 
         return super().validate(attrs)
 
-class customer_serializer(serializers.ModelSerializer):
+class CustomerSerializer(serializers.ModelSerializer):
     
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')

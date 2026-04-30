@@ -1,15 +1,15 @@
 from . import models
-from rest_framework import serializers
 from django.db import transaction
+from rest_framework import serializers
 
-class image_serializer(serializers.ModelSerializer):
+class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.productImage
         fields = ['image', 'product']
 
 
-class product_serialzer(serializers.ModelSerializer):
-    images = image_serializer(many=True, read_only=True)
+class ProductSerialzer(serializers.ModelSerializer):
+    images = ImageSerializer(many=True, read_only=True)
     store_name = serializers.CharField(source='seller.store_name', read_only=True)
     class Meta:
         model = models.product
@@ -22,7 +22,7 @@ class product_serialzer(serializers.ModelSerializer):
         validated_data['seller'] = seller
         return models.product.objects.create(**validated_data)
 
-class order_serializer(serializers.ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer', read_only=True)
     store_name = serializers.CharField(source='seller.store_name', read_only=True)
     total_quantity = serializers.SerializerMethodField(read_only=True)
@@ -46,19 +46,19 @@ class order_serializer(serializers.ModelSerializer):
         
         
         cart_object = models.cart.objects.get(customer = customer)
-        cartitems = models.cart_item.objects.filter(cart=cart_object)
+        cart_items = models.cart_item.objects.filter(cart=cart_object)
         validated_data['total_value'] = sum(
                         item.product.price * item.quantity
-                        for item in cartitems
+                        for item in cart_items
                     )
     
-        validated_data['seller'] = cartitems[0].product.seller
+        validated_data['seller'] = cart_items[0].product.seller
         order_object = models.order.objects.create(**validated_data)
 
         items = [models.order_item(order= order_object,
                                     product = item.product,
                                     quantity = item.quantity
-                                    ) for item in cartitems]
+                                    ) for item in cart_items]
 
         models.order_item.objects.bulk_create(items)
         cart_object.delete()
@@ -88,13 +88,13 @@ class order_serializer(serializers.ModelSerializer):
             fields['total_value'].read_only = True
         return fields
 
-class orderItem_serializer(serializers.ModelSerializer):
+class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.order_item
         fields = ['product', 'quantity']
 
 
-class cartItem_serializer(serializers.ModelSerializer):
+class CartItemSerializer(serializers.ModelSerializer):
     
     product_name = serializers.CharField(source='product.name', read_only=True)
     first_image = serializers.SerializerMethodField()
@@ -131,7 +131,7 @@ class cartItem_serializer(serializers.ModelSerializer):
     
 class cart_serializer(serializers.ModelSerializer): 
     
-    cart_item_set = cartItem_serializer(many=True, read_only=True)
+    cart_item_set = CartItemSerializer(many=True, read_only=True)
     class Meta:
         model = models.cart
         fields = ['id', 'cart_item_set']

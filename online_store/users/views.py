@@ -1,16 +1,16 @@
-from rest_framework.viewsets import ModelViewSet, ViewSet
-from .serializer import customer_serializer, seller_serializer
-from rest_framework.decorators import action
+
 from .models import seller, customer
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework.response import Response
+from .serializer import CustomerSerializer, SellerSerializer
+from online_store.permissions import IsOwnerOrAdmin
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import status
+from rest_framework.viewsets import ModelViewSet, ViewSet
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
-from online_store.online_store.permissions import IsOwnerOrAdmin
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -38,8 +38,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 secure=False,
                 samesite='Lax'
             )
-        print(response.data['access'])
-        print(response.data['refresh'])
 
         del response.data['access']
         del response.data['refresh']
@@ -72,7 +70,7 @@ class RefreshView(TokenRefreshView):
                 key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=False,  # True in production
+                secure=False,
                 samesite="Lax",
             )
 
@@ -150,12 +148,12 @@ class getUserView(ViewSet):
                 'profile_image': url,
             })
     
-class customer_viewset(ModelViewSet):
+class CustomerViewset(ModelViewSet):
     permission_classes = [IsOwnerOrAdmin]
     queryset = customer.objects.all()
-    serializer_class = customer_serializer
+    serializer_class = CustomerSerializer
 
-class seller_viewset(ModelViewSet):
+class SellerViewset(ModelViewSet):
     permission_classes = [IsOwnerOrAdmin]
     queryset = seller.objects.all()
-    serializer_class = seller_serializer
+    serializer_class = SellerSerializer
