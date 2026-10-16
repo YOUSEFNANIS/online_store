@@ -1,0 +1,21 @@
+{
+  "title": "Login",
+  "username": "User name",
+  "password": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "capsLock": "Caps Lock is on",
+  "submit": "Login",
+  "loggingIn": "Logging in...",
+  "noAccount": "don't have an account?",
+  "registerHere": "register here",
+  "errors": {
+    "usernameRequired": "Please enter your user name.",
+    "passwordRequired": "Please enter your password.",
+    "network": "Cannot reach the server. Check your connection and try again.",
+    "wrongCredentials": "Wrong user name or password. Please try again.",
+    "tooMany": "Too many attempts. Please wait a moment and try again.",
+    "server": "Something went wrong on our side. Please try again later.",
+    "failed": "Login failed. Please try again."
+  }
+}

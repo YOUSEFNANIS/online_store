@@ -1,0 +1,10 @@
+{
+  "uploadAria": "upload profile image",
+  "profileAlt": "Profile",
+  "firstName": "first name",
+  "lastName": "last name",
+  "phone": "phone number",
+  "save": "save",
+  "cancel": "cancel",
+  "invalidImage": "Please select a valid image file."
+}

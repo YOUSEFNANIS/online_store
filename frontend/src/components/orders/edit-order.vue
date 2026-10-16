@@ -2,7 +2,7 @@
   <div class="container">
 
     <div class="order-id-header">
-      <h2>#order Id: {{ $route.params.orderId }}</h2>
+      <h2>{{ $t('editOrder.orderId', { id: $route.params.orderId }) }}</h2>
       <h2>{{ customer_name }}</h2>
     </div>
     <div class="form-row">
@@ -10,26 +10,28 @@
             type="text" 
             v-model="location" 
             class="laction-field"
-            placeholder="location"
+            :aria-label="$t('editOrder.location')"
+            :placeholder="$t('editOrder.location')"
         >
 
         <div class="price-row">
         <input 
             type="text" 
-            placeholder="total price"
-            v-model="price" 
+            :placeholder="$t('editOrder.totalPrice')"
+            v-model="price"
             class="price-input"
+            :aria-label="$t('editOrder.totalPrice')"
         >
-        
-        <span>LYD</span>
+
+        <span>{{ $t('editOrder.currency') }}</span>
     </div>
     </div>
 
     
 
     <div class="actions">
-        <button @click="save" class="btn">save</button>
-        <button @click="handleCancel" class="btn">cancel</button>
+        <button @click="save" class="btn btn-primary">{{ $t('editOrder.save') }}</button>
+        <button @click="handleCancel" class="btn btn-outline">{{ $t('editOrder.cancel') }}</button>
     </div>
   </div>
 </template>
@@ -63,7 +65,7 @@ import api from '@/services/api';
 
         } catch (error) {
             console.error("Error saving data:", error);
-            alert('Failed to save data. Please try again.');
+            alert(this.$t('editOrder.saveFailed'));
         }
             },
             handleCancel() {
@@ -76,75 +78,58 @@ import api from '@/services/api';
 </script>
 
 <style scoped>
-        
-         .container {
-          position: absolute;
-          top: 30%;
-          left: 30%;
-          background: white;
-          border: 1px solid #ebebeb;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-          overflow: hidden;
-          padding: 2.5rem;
-          max-width: 700px
-        }
-.order-id-header {
-    width: 100%;
-    display: flex;
-    background-color: #fcfcfc;
-    justify-content: space-between;
-    border-bottom: 2px solid #000000; /* That specific blue line from your image */
-    margin-bottom: 2rem;
+.container {
+  position: absolute;
+  top: 30%;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  width: min(700px, calc(100vw - 2rem));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 2rem;
+  z-index: 50;
 }
-
+.order-id-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1.5rem;
+}
 .order-id-header h2 {
-    margin: 0;
-    padding: 0px 0px 20px 0px;
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #111;
-    /* This makes it look like the "typewriter" or clean font in your pic */
+  margin: 0;
+  padding: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
 .form-row {
-    display: flex;
-    width: 100%; /* Changed from fit-content */
-    align-items: flex-end;
-    justify-content: space-between; 
-    border: 20px 0px;
-    gap: 2rem;
-    margin-bottom: 2.5rem;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
-
-.laction-field {
-    flex: 2;
-}
-
+.laction-field { flex: 2; }
 .price-row {
-    display: flex;
-    width: fit-content;
-    align-items: flex-end;
-    gap: 1rem;
-    flex: 1; /* Takes up less space */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  color: var(--color-text-muted);
 }
-
+.price-row input { flex: 1; min-width: 0; }
 .actions {
-    display: flex;
-    flex: 1;
-    gap: 1rem;
-    margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
-
-input {
-    flex: 1;
-    border: none;
-    border-bottom: 1.5px solid #999;
-    background: transparent;
-    font-size: 1.2rem;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-input:focus {
-    border-bottom-color: #3b82f6;
+input { flex: 1; min-height: 40px; }
+@media (max-width: 600px) {
+  .form-row { flex-direction: column; align-items: stretch; gap: 1rem; }
 }
 </style>

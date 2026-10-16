@@ -1,13 +1,43 @@
-<!-- OrdersChart.vue -->
 <template>
-  <div class="card">
-    <div class="card-header">
-      <h3>Orders (Last 7 Days)</h3>
-    </div>
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <h1>{{ $t('sellerDashboard.title') }}</h1>
+      <p>{{ rangeLabel }}</p>
+    </header>
 
-    <div class="chart-container">
-      <Line :data="chartData" :options="chartOptions" />
-    </div>
+    <section class="stats" :aria-label="$t('sellerDashboard.summaryAria')">
+      <div class="stat">
+        <span class="stat-label">{{ rangeShort }}</span>
+        <span class="stat-value">{{ loaded ? fmt(total) : '—' }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">{{ $t('sellerDashboard.today') }}</span>
+        <span class="stat-value">{{ loaded ? fmt(today) : '—' }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">{{ $t('sellerDashboard.dailyAverage') }}</span>
+        <span class="stat-value">{{ loaded ? fmt(average, 1) : '—' }}</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>{{ $t('sellerDashboard.ordersPerDay') }}</h2>
+      </div>
+
+      <div class="chart-container">
+        <p v-if="!loaded && !failed" class="chart-state" role="status">{{ $t('sellerDashboard.loadingOrders') }}</p>
+        <p v-else-if="failed" class="chart-state chart-state-error" role="alert">
+          {{ $t('sellerDashboard.loadFailed') }}
+        </p>
+        <template v-else>
+          <Line :data="chartData" :options="chartOptions" />
+          <p v-if="total === 0" class="chart-state chart-empty">
+            {{ $t(windowDays < 7 ? 'sellerDashboard.noOrdersSinceJoin' : 'sellerDashboard.noOrdersWeek') }}
+          </p>
+        </template>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -25,39 +55,63 @@ export default {
   
   async mounted(){
 
-    const labels = await this.fetchOrders()
-    const entries = Object.entries(labels)
-    entries.sort((a, b) => new Date(a[0]) - new Date(b[0]))
-    const sortedData = Object.fromEntries(entries)
-    this.labels = Object.keys(sortedData)
-    this.orders = Object.values(sortedData)
+    try {
+      await this.loadWindow()
+      const labels = await this.fetchOrders()
+      const entries = Object.entries(labels)
+      entries.sort((a, b) => new Date(a[0]) - new Date(b[0]))
+      const sortedData = Object.fromEntries(entries)
+      this.labels = Object.keys(sortedData)
+      this.orders = Object.values(sortedData)
+      this.loaded = true
+    } catch (error) {
+      this.failed = true
+    }
   },
   data() {
     return {
       orders: null,
-      labels:  null
+      labels:  null,
+      windowDays: 7,
+      loaded: false,
+      failed: false
     }
   },
 
   computed: {
-    
+    total() {
+      return (this.orders || []).reduce((sum, n) => sum + n, 0)
+    },
+    today() {
+      return this.orders?.length ? this.orders[this.orders.length - 1] : 0
+    },
+    average() {
+      return (this.total / this.windowDays).toFixed(1)
+    },
+    rangeLabel() {
+      return this.$t(this.windowDays < 7 ? 'sellerDashboard.rangeSinceJoin' : 'sellerDashboard.rangeWeek')
+    },
+    rangeShort() {
+      return this.$t(this.windowDays < 7 ? 'sellerDashboard.shortSinceJoin' : 'sellerDashboard.shortWeek')
+    },
+
     chartData() {
       return {
-        labels: this.labels,
+        labels: (this.labels || []).map(this.formatLabel),
         datasets: [
           {
-            label: 'Orders',
+            label: this.$t('sellerDashboard.orders'),
             data: this.orders,
 
-            borderColor: '#5C6AC4',
-            backgroundColor: 'rgba(92, 106, 196, 0.1)',
+            borderColor: '#1A56DB',
+            backgroundColor: 'rgba(26, 86, 219, 0.1)',
 
             tension: 0.4,
             fill: true,
 
             pointRadius: 0,
             pointHoverRadius: 5,
-            pointBackgroundColor: '#5C6AC4',
+            pointBackgroundColor: '#1A56DB',
 
             borderWidth: 2
           }
@@ -81,7 +135,7 @@ export default {
             padding: 10,
             displayColors: false,
             callbacks: {
-              label: (context) => `Orders: ${context.raw}`
+              label: (context) => this.$t('sellerDashboard.tooltipOrders', { count: this.fmt(context.raw) })
             }
           }
         },
@@ -102,7 +156,7 @@ export default {
             },
             ticks: {
               color: '#6B7280',
-              stepSize: 5
+              precision: 0
             }
           }
         }
@@ -111,11 +165,31 @@ export default {
   },
 
   methods: {
+    fmt(n, digits = 0) {
+      return new Intl.NumberFormat(this.$i18n.locale, { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(Number(n))
+    },
+    formatLabel(key) {
+      const [y, m, d] = String(key).split(' ')
+      const idx = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(m)
+      if (idx < 0) return key
+      return new Date(Number(y), idx, Number(d)).toLocaleDateString(this.$i18n.locale, { month: 'short', day: 'numeric' })
+    },
+
+    // Days shown = min(7, calendar days since the account was created, inclusive of today).
+    // Accounts 7 days old or newer only show days that exist; older accounts show the last 7.
+    async loadWindow() {
+      const response = await api.get('http://127.0.0.1:8000/signup/get_id/me/')
+      const joined = response.data.date_joined ? new Date(response.data.date_joined) : null
+      if (!joined || Number.isNaN(joined.getTime())) return
+      const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+      const ageDays = Math.round((startOfDay(new Date()) - startOfDay(joined)) / 86400000)
+      this.windowDays = Math.min(7, Math.max(1, ageDays + 1))
+    },
 
     async fetchOrders() {
       const url = 'http://127.0.0.1:8000/core/orders/'
       const date = new Date()
-      date.setDate(date.getDate() - 7)
+      date.setDate(date.getDate() - (this.windowDays - 1))
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
@@ -145,7 +219,7 @@ export default {
     getLast7Days() {
     const days = []
 
-    for (let i = 6; i >= 0; i--) {
+    for (let i = this.windowDays - 1; i >= 0; i--) {
       const date = new Date()
     date.setDate(date.getDate() - i)
 
@@ -163,31 +237,80 @@ export default {
 </script>
 
 <style scoped>
-.card {
-  background: #ffffff;
-  widows: 100%;
-  height: 100%;
-  position: relative;
-  margin: 10% 5% 0 5%;
+.dashboard {
   display: block;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  width: min(1100px, 92%);
+  height: auto;
+  margin: 130px auto 2rem;
 }
-
-.card-header {
-  margin-bottom: 10px;
+.dashboard-header { margin-bottom: 1.25rem; }
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
 }
-
-.card-header h3 {
-  font-size: 16px;
+.dashboard-header p {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem;
+}
+.card-header { margin-bottom: 0.75rem; }
+.card-header h2 {
+  margin: 0;
+  font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text);
 }
-
 .chart-container {
   position: relative;
-  width: 90%;
-  height: 300px;
-  max-height: 100%;
-  margin: 5% 5% 0 5%;
+  width: 100%;
+  height: 320px;
 }
+.chart-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: var(--color-text-muted);
+  text-align: center;
+  pointer-events: none;
+}
+.chart-state-error { color: var(--color-error); }
+.chart-empty { align-items: center; padding-bottom: 2rem; }
 </style>

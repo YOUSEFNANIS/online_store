@@ -3,7 +3,13 @@
       <nav-bar v-if="showNavBar" @search="getSearchQueryResults"></nav-bar>
       <transition name="slide-fade">
       <div v-if="banner" class="success-banner">
-          saved !
+          {{ $t('app.saved') }}
+      </div>
+      </transition>
+      <transition name="slide-fade">
+      <div v-if="errorMessage" class="error-banner" role="alert" @click="errorMessage = ''">
+          {{ errorMessage }}
+          <button class="error-close" :aria-label="$t('app.dismiss')" @click.stop="errorMessage = ''">&times;</button>
       </div>
       </transition>
       <router-view class="page-content"  @saved="showBanner"></router-view>
@@ -16,6 +22,7 @@
 import chatBot from './chat-bot.vue'
 import NavBar from './components/helperComponents/nav-bar.vue';
 import ShowCart from './show-cart.vue';
+import { useRoleStore } from '@/stores/role'
 
 export default {
   components: {
@@ -26,9 +33,20 @@ export default {
   data(){
     return {
       banner: false,
+      errorMessage: '',
+      errorTimer: null,
     }
   },
+  mounted(){
+    window.addEventListener('api-error', this.showError)
+  },
+  beforeUnmount(){
+    window.removeEventListener('api-error', this.showError)
+  },
   computed:{
+    roleStore() {
+      return useRoleStore()
+    },
     showNavBar(){
       if (this.$route.path === '/login' || this.$route.path === '/signup'){
           return false
@@ -43,6 +61,11 @@ export default {
   },
   methods: {
     
+    showError(event){
+      this.errorMessage = event.detail
+      clearTimeout(this.errorTimer)
+      this.errorTimer = setTimeout(() => { this.errorMessage = '' }, 5000)
+    },
     showBanner(){
       this.banner= true
       setTimeout(() => {
@@ -61,18 +84,9 @@ export default {
 
 
 <style>
-* {
-  border-radius: 9px;
-}
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  background: #f4f4f4;
-}
 a {
-  color: black;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 600;
   font-size: inherit;
 }
 .page-content {
@@ -84,18 +98,39 @@ a {
   margin: 5% 0 0 0;/* same as navbar height */
 }
 
-.success-banner {
+.success-banner,
+.error-banner {
   position: fixed;
   top: 9.6%; /* below navbar */
-  left: 0;
+  inset-inline-start: 0;
   width: 100%;
-  background-color: #83fd8d;
-  color: #0a3d0f;
   text-align: center;
-  padding: 18px 0;
-  font-size: 20px;
+  padding: 14px 0;
+  font-size: 1rem;
+  font-weight: 600;
   z-index: 100;
-  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+}
+.success-banner {
+  background-color: var(--color-success-soft);
+  color: #14532D;
+  border-bottom: 2px solid var(--color-success);
+}
+.error-banner {
+  background-color: var(--color-error-soft);
+  color: #991B1B;
+  border-bottom: 2px solid var(--color-error);
+  cursor: pointer;
+}
+.error-close {
+  position: absolute;
+  inset-inline-end: 16px;
+  top: 6px;
+  border: none;
+  background: none;
+  font-size: 26px;
+  color: inherit;
+  cursor: pointer;
 }
 
 .remove-btn{
@@ -103,73 +138,49 @@ a {
   background:none;
   font-size:18px;
   cursor:pointer;
+  color: var(--color-text-muted);
 }
+.remove-btn:hover { color: var(--color-error); }
 
 .slide-fade-enter-active,
 .slide-fade-leave-active {
-  transition: all 0.5s ease;
+  transition: all 0.3s ease;
 }
-
-/* Enter from slightly below the navbar */
-.slide-fade-enter-from {
-  opacity: 0;
-  transform: translateY(-10px); /* small offset below navbar */
-}
-.slide-fade-enter-to {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Leave by sliding up but still below navbar */
-.slide-fade-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
+.slide-fade-enter-from,
 .slide-fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
 }
-
-.btn{
-  background:black;
-  color:white;
-  font-size:24px;
-  padding:10px 25px;
-  border:none;
-  cursor:pointer;
-  box-shadow:0 3px 5px rgba(0,0,0,0.3);
+.slide-fade-enter-to,
+.slide-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.btn:hover{
-  opacity:0.9;
-  transform: translateY(-1px);
-}
 .pagination {
   display: flex;
   margin: auto;
   padding-bottom: 25px;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
-
 .pagination-btn {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: none;
-  background-color: #e5e5e5;
-  color: #333;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  transition: var(--transition);
 }
-
-.pagination-btn:hover {
-  background-color: #d4d4d4;
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
-
 .pagination-btn.active {
-  background-color: #3c5d8c; /* blue/purple like your image */
-  color: white;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
 }
 </style>

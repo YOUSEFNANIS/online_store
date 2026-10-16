@@ -1,7 +1,7 @@
 <template>
   <div class="loader-container">
     <div class="spinner"></div>
-    <p>جاري التحميل...</p>
+    <p>{{ $t('loading.text') }}</p>
   </div>
 </template>
 
@@ -12,13 +12,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   padding: 5%;
+  color: var(--color-text-muted);
 }
 .spinner {
-  width: 100px;
-  height: 100px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #000; /* Matches your black button theme */
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

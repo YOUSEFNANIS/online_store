@@ -1,0 +1,61 @@
+{
+  "brand": "السوق التحريري",
+  "nav": {
+    "services": "الخدمات",
+    "whoWeAre": "من نحن",
+    "joinUs": "انضم إلينا",
+    "login": "تسجيل الدخول",
+    "signup": "إنشاء حساب"
+  },
+  "hero": {
+    "titleLine1": "اعقد",
+    "titleLine2": "صفقة",
+    "description": "اكتشف منتجات من بائعين محليين في منطقتك. سوق أُعيد تصوّره بدقة تحريرية ومعايير عالية من الثقة.",
+    "signupFree": "سجّل مجانًا",
+    "browse": "تصفّح السوق"
+  },
+  "why": {
+    "title": "لماذا التسوق محليًا؟",
+    "subtitle": "تسدّ منصتنا الفجوة بين راحة العالم الرقمي وتراث المجتمع المحلي."
+  },
+  "features": {
+    "trusted": {
+      "title": "بائعون موثوقون",
+      "description": "يتم التحقق من كل بائع للتأكد من جودته وموثوقيته."
+    },
+    "local": {
+      "title": "اكتشاف محلي",
+      "description": "اعثر على منتجات فريدة قرب موقعك."
+    },
+    "fast": {
+      "title": "توصيل سريع",
+      "description": "وداعًا لتأخيرات الشحن الدولي الطويلة."
+    }
+  },
+  "cta": {
+    "title": "هل تريد بدء مشروعك التجاري؟",
+    "text": "انضم إلى أكثر من {count} حرفي محلي حوّلوا شغفهم إلى حضور تجاري مزدهر.",
+    "button": "كن بائعًا"
+  },
+  "about": {
+    "title": "من نحن",
+    "text": "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quas hic, cupiditate vel ipsa, reiciendis delectus aliquid repellendus quaerat au"
+  },
+  "footer": {
+    "marketplace": "السوق",
+    "sustainability": "الاستدامة",
+    "merchantTerms": "شروط التجار",
+    "privacy": "سياسة الخصوصية",
+    "company": "الشركة",
+    "careers": "الوظائف",
+    "support": "الدعم",
+    "contactUs": "اتصل بنا",
+    "facebook": "فيسبوك",
+    "instagram": "إنستغرام",
+    "whatsapp": "واتساب",
+    "messageUs": "راسلنا",
+    "emailPlaceholder": "البريد الإلكتروني",
+    "send": "إرسال",
+    "copyright": "© 2026 10FastFingers, Inc. جميع الحقوق محفوظة."
+  }
+}

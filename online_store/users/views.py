@@ -27,7 +27,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 httponly=True,
                 secure=False,     # Always use True in production (HTTPS)
                 samesite='Lax',
-                path= '/'  # Helps with CSRF
+                path= '/'
             )
             
         if refresh_token:
@@ -128,6 +128,7 @@ class getUserView(ViewSet):
             return Response({
             "id": id,
             "first_name": request.user.first_name,
+            "date_joined": request.user.date_joined,
             "last_name": request.user.last_name,
             "email": request.user.email,
             "phone_number": getattr(user_object, 'phone_number', None),
@@ -141,6 +142,7 @@ class getUserView(ViewSet):
             return Response({
                 "id": id,
                 "first_name": request.user.first_name,
+                "date_joined": request.user.date_joined,
                 "last_name": request.user.last_name,
                 "email": request.user.email,
                 "balance": getattr(user_object, 'balance', None),

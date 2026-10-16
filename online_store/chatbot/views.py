@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
+
+
 class Chatviewset(ModelViewSet):
     serializer_class = chat_serializer
     queryset = chat.objects.all()
@@ -28,6 +30,7 @@ class ChatMessageviewset(ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         instance = serializer.save()
         
         return Response({"chat_id": instance.id},

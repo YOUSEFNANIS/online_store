@@ -1,0 +1,23 @@
+--2026-07-22 18:05:22--  https://update.code.visualstudio.com/commit:8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8/server-linux-x64/stable
+Resolving update.code.visualstudio.com (update.code.visualstudio.com)... 150.171.109.81, 2603:1061:14:170::1
+Connecting to update.code.visualstudio.com (update.code.visualstudio.com)|150.171.109.81|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://vscode.download.prss.microsoft.com/dbazure/download/stable/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8/vscode-server-linux-x64.tar.gz [following]
+--2026-07-22 18:05:23--  https://vscode.download.prss.microsoft.com/dbazure/download/stable/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8/vscode-server-linux-x64.tar.gz
+Resolving vscode.download.prss.microsoft.com (vscode.download.prss.microsoft.com)... 199.232.214.172, 199.232.210.172, 2a02:26f0:2d:102::1707:f599, ...
+Connecting to vscode.download.prss.microsoft.com (vscode.download.prss.microsoft.com)|199.232.214.172|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 192112824 (183M) [application/octet-stream]
+Saving to: ‘/home/yousefnanis134/.vscode-server/bin/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8-1784735687.tar.gz’
+
+
+
+2026-07-22 18:25:24 (12.4 KB/s) - Read error at byte 14514342/192112824 (Connection timed out). Retrying.
+
+--2026-07-22 18:25:24--  (try: 2)  https://vscode.download.prss.microsoft.com/dbazure/download/stable/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8/vscode-server-linux-x64.tar.gz
+Connecting to vscode.download.prss.microsoft.com (vscode.download.prss.microsoft.com)|199.232.214.172|:443... connected.
+HTTP request sent, awaiting response... 206 Partial Content
+Length: 192112824 (183M), 177598482 (169M) remaining [application/octet-stream]
+Saving to: ‘/home/yousefnanis134/.vscode-server/bin/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8-1784735687.tar.gz’
+
+e/yousefnanis134/.vscode-server/bin/  18%[+++++======>                                                           ]  33.28M   209KB/s    eta 11m 48s/yousefnanis134/.vscode-server/bin/8  18%[+++++======>                                                           ]  33.29M   206KB/s    eta 11m 48syousefnanis134/.vscode-server/bin/8a  18%[+++++=======>                                                          ]  34.12M   254KB/s    eta 11m 48sousefnanis134/.vscode-server/bin/8a7  18%[+++++=======>                                                          ]  34.17M   254KB/s    eta 11m 48susefnanis134/.vscode-server/bin/8a7a  18%[+++++=======>                                                          ]  34.22M   253KB/s    eta 11m 19ssefnanis134/.vscode-server/bin/8a7ab  18%[+++++=======>                                                          ]  34.29M   253KB/s    eta 11m 19sefnanis134/.vscode-server/bin/8a7abe  18%[+++++=======>                                                          ]  34.36M   253KB/s    eta 11m 19sfnanis134/.vscode-server/bin/8a7abeb  18%[+++++=======>                                                          ]  34.39M   361KB/s    eta 11m 19snanis134/.vscode-server/bin/8a7abeba  18%[+++++=======>                                                          ]  34.44M   436KB/s    eta 11m 19sanis134/.vscode-server/bin/8a7abeba6  18%[+++++=======>                                                          ]  34.44M   394KB/s    eta 11m 24snis134/.vscode-server/bin/8a7abeba6e  18%[+++++=======>                                                          ]  34.44M   360KB/s    eta 11m 24s

@@ -1,40 +1,82 @@
 <template>
     <div class="signup-container">
+    <lang-switcher class="floating-lang" />
     <div class="signup-card">
-        <h1 class="title">Login</h1>
+        <h1 class="title">{{ $t('login.title') }}</h1>
 
-        <form @submit.prevent="handleSignup">
+        <form @submit.prevent="submitForm" novalidate>
 
-        <!-- First + Last Name -->
-        <div class="row">
-            <input
-            type="text"
-            placeholder="User name"
-            v-model="form.username"
-            class="input"
-            />
+        <div v-if="formError" class="form-error" role="alert">
+            {{ formError }}
         </div>
 
-        <!-- Password -->
-        <div class="row">
-            <input
-            type="password"
-            placeholder="Password"
-            v-model="form.password"
-            class="input"
-            />
+        <div class="field">
+            <label for="username" class="label">{{ $t('login.username') }}</label>
+            <div class="row" :class="{ invalid: errors.username }">
+                <input
+                id="username"
+                ref="username"
+                type="text"
+                :placeholder="$t('login.username')"
+                autocomplete="username"
+                autofocus
+                v-model.trim="form.username"
+                class="input"
+                :aria-invalid="!!errors.username"
+                aria-describedby="username-error"
+                @input="clearError('username')"
+                />
+            </div>
+            <p v-if="errors.username" id="username-error" class="field-error" role="alert">
+                {{ errors.username }}
+            </p>
         </div>
 
-        <!-- Buttons -->
+        <div class="field">
+            <label for="password" class="label">{{ $t('login.password') }}</label>
+            <div class="row password" :class="{ invalid: errors.password }">
+                <input
+                id="password"
+                ref="password"
+                :type="passwordVisible ? 'text' : 'password'"
+                :placeholder="$t('login.password')"
+                autocomplete="current-password"
+                v-model="form.password"
+                class="input input-bare"
+                :aria-invalid="!!errors.password"
+                aria-describedby="password-error"
+                @input="clearError('password')"
+                @keyup="capsLock = $event.getModifierState && $event.getModifierState('CapsLock')"
+                @blur="capsLock = false"
+                />
+
+                <button
+                type="button"
+                class="toggle-icon"
+                :aria-label="passwordVisible ? $t('login.hidePassword') : $t('login.showPassword')"
+                :aria-pressed="passwordVisible"
+                @click="passwordVisible = !passwordVisible"
+                >
+                    <Eye v-if="passwordVisible"/>
+                    <EyeOff v-else/>
+                </button>
+            </div>
+            <p v-if="errors.password" id="password-error" class="field-error" role="alert">
+                {{ errors.password }}
+            </p>
+            <p v-else-if="capsLock" class="field-hint">{{ $t('login.capsLock') }}</p>
+        </div>
+
         <div class="button-row">
-            <button type="submit" @click="submitForm" class="btn secondary">
-            Login
+            <button type="submit" class="btn btn-primary submit-btn" :disabled="loading">
+                <span v-if="loading" class="spinner" aria-hidden="true"></span>
+                {{ loading ? $t('login.loggingIn') : $t('login.submit') }}
             </button>
         </div>
-        <footer style="padding: 5px;"> don't have an account? 
-            <router-link :to="'/signup'" style="color: blue;">
-                register here
-            </router-link> 
+        <footer class="footer"> {{ $t('login.noAccount') }}
+            <router-link :to="'/signup'" class="link">
+                {{ $t('login.registerHere') }}
+            </router-link>
         </footer>
         </form>
     </div>
@@ -44,8 +86,9 @@
 import api from '@/services/api';
 import { mapActions, mapState } from 'pinia'
 import {useRoleStore} from '@/stores/role.js';
-
+import { Eye, EyeOff } from '@lucide/vue';
 export default {
+    components: {EyeOff, Eye},
         computed: {
             ...mapState(useRoleStore, ['role'])
         },
@@ -56,22 +99,69 @@ export default {
                 form: {
                 username:'',
                 password: '',
-                    }
+                    },
+                errors: {},
+                formError: '',
+                loading: false,
+                capsLock: false,
+                passwordVisible: false
                 }
             },
 
         methods:{
             ...mapActions(useRoleStore, ['set_role']),
-            
+
+            clearError(field){
+                if (this.errors[field]) {
+                    this.errors = { ...this.errors, [field]: '' }
+                }
+                this.formError = ''
+            },
+
+            validate(){
+                const errors = {}
+                if (!this.form.username) errors.username = this.$t('login.errors.usernameRequired')
+                if (!this.form.password) errors.password = this.$t('login.errors.passwordRequired')
+                this.errors = errors
+                const firstInvalid = ['username', 'password'].find(f => errors[f])
+                if (firstInvalid) this.$refs[firstInvalid].focus()
+                return !firstInvalid
+            },
+
+            describeError(error){
+                if (!error.response) {
+                    return this.$t('login.errors.network')
+                }
+                const { status, data } = error.response
+                if (status === 400 || status === 401) {
+                    return this.$t('login.errors.wrongCredentials')
+                }
+                if (status === 429) {
+                    return this.$t('login.errors.tooMany')
+                }
+                if (status >= 500) {
+                    return this.$t('login.errors.server')
+                }
+                return (data && data.detail) || this.$t('login.errors.failed')
+            },
+
             async submitForm(){
+                if (this.loading || !this.validate()) return
+                this.loading = true
+                this.formError = ''
                 try{
-                    const response = await api.post('http://127.0.0.1:8000/api/token/', this.form);
-                    this.$router.push('/');
-                    this.startchat();
+                    const response = await api.post('/api/token/', this.form);
                     this.set_role(response.data['user_type'])
+                    this.startchat();
+                    this.$router.push('/');
                 }
                 catch(error){
-                    console.log(error)
+                    this.formError = this.describeError(error)
+                    this.form.password = ''
+                    this.$refs.password.focus()
+                }
+                finally{
+                    this.loading = false
                 }
             },
             async startchat(){
@@ -87,81 +177,132 @@ export default {
 </script>
 
 <style scoped>
-
 .signup-container {
-    height: 100vh;
-    width: 100vw;
-    position: relative;
-    border-radius: 0px;
-    margin: 0;
-    justify-content: center;
-  background-image: radial-gradient(circle, #a4a4a4 0%, #6f829e 100%);
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--color-bg);
 }
-
 .signup-card {
-    height: 50%;
-    width: 25%;
-    margin: auto;
-    justify-content: center;
-    align-content: center;
-    padding: 25px 60px;
-    box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.35);
-    background: #ffffff;
-  background-image: radial-gradient(circle, #ffffff 50%, #f4f4f4 );
+  width: 100%;
+  max-width: 420px;
+  padding: 32px 32px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
 }
-
 .title {
-    text-align: center;
-    font-size: 3rem;
-    margin: 0;
-    margin-bottom: 10%;
-    color: #000000;
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 24px;
+  color: var(--color-text);
 }
-
-
+.form-error {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+.field { margin-bottom: 16px; }
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
 .row {
-    display: flex;
-    gap: 15px;
-    opacity: 60%;
-    margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
-.row:hover{
-    opacity: 100%;
+.row:hover { border-color: var(--color-text-muted); }
+.row:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
 }
-.row:active {
-    opacity: 100%;
+.row.invalid { border-color: var(--color-error); }
+.row.invalid:focus-within { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3); }
+.input,
+.input:focus {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.6rem 0.9rem;
+  color: var(--color-text);
+  font-size: 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  outline: none;
+  box-shadow: none;
+  background: transparent;
 }
-.input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid black;
-    color: rgb(0, 0, 0);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-    font-size: 14px;
+.toggle-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
 }
-
-.select {
-    cursor: pointer;
+.toggle-icon:hover { color: var(--color-text); }
+.field-error {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-error);
 }
-
-.button-row {
-    display: flex;
-    max-width: 100%;
-    margin: auto;
-    position: relative;
-    justify-content: space-between;
-    margin-top: 25px;
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
 }
-
-.secondary {
-    background: #000000;  
-    color: #ffffff;
-    font-weight: bold;
-    width: 100%;
-    height: 105%;
-
+.button-row { display: flex; margin-top: 24px; }
+.submit-btn {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 0;
+  font-size: 1rem;
+  cursor: pointer;
 }
-.secondary:hover {
-    opacity: 70%;
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.footer {
+  padding: 16px 5px 4px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+.link {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover { color: var(--color-primary-hover); text-decoration: underline; }
+@media (max-width: 480px) {
+  .signup-card { padding: 24px 18px 20px; }
+  .title { font-size: 1.5rem; }
 }
 </style>

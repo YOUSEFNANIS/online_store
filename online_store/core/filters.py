@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from .models import order
+from .models import order, product
 from django_filters.rest_framework import DjangoFilterBackend
 
 class OrderFilter(filters.FilterSet):
@@ -10,3 +10,16 @@ class OrderFilter(filters.FilterSet):
     class Meta:
         model = order
         fields = ['start_date', 'end_date']
+
+
+class ProductFilter(filters.FilterSet):
+    min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
+    max_price = filters.NumberFilter(field_name="price", lookup_expr='lte')
+    in_stock = filters.BooleanFilter(method='filter_in_stock')
+
+    def filter_in_stock(self, queryset, name, value):
+        return queryset.filter(inventory__gt=0) if value else queryset
+
+    class Meta:
+        model = product
+        fields = ['min_price', 'max_price', 'in_stock']

@@ -3,6 +3,7 @@ from django.db import transaction
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import filters, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from online_store import permissions
@@ -31,8 +32,11 @@ class SendOrderReceiptView(APIView):
         
 class ProductViewSet(ModelViewSet):
     serializer_class = serializer.ProductSerialzer
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, customFilters.DjangoFilterBackend, filters.OrderingFilter]
     search_fields = ['name', 'description']
+    filterset_class = customFilters.ProductFilter
+    ordering_fields = ['price', 'id', 'name']
+    ordering = ['-id']
     pagination_class = CustomPagination
     permission_classes = [permissions.IsSeller]
 
@@ -58,17 +62,18 @@ class OrderViewset(ModelViewSet):
     serializer_class = serializer.OrderSerializer
     filter_backends = [customFilters.DjangoFilterBackend]
     filterset_class = customFilters.OrderFilter
-    permission_classes = [permissions.IsOwner]
+    permission_classes = [IsAuthenticated, permissions.IsOwner]
     pagination_class = CustomPagination
     def get_queryset(self):
         
-        if hasattr(self.request.user, 'seller'):
-            seller = models.seller.objects.get(user = self.request.user)
-            return models.order.objects.filter(seller = seller)
-        
-        else:
-            customer = models.customer.objects.get(user = self.request.user)
-            return models.order.objects.filter(customer = customer)
+        user = self.request.user
+        if hasattr(user, 'seller'):
+            return models.order.objects.filter(seller = user.seller).order_by("-creation_date", "-id")
+
+        if hasattr(user, 'customer'):
+            return models.order.objects.filter(customer = user.customer).order_by("-creation_date", "-id")
+
+        return models.order.objects.none()
     
     @transaction.atomic
     def update(self, request, *args, **kwargs):
@@ -100,7 +105,7 @@ class OrderViewset(ModelViewSet):
         tasks.message_seller.delay(order.id, order.seller.user.email)
         #order.seller.save()
 
-class ImageViewset(ModelViewSet):
+class ImageViewSet(ModelViewSet):
     serializer_class = serializer.ImageSerializer
     
     def get_queryset(self):
@@ -114,7 +119,7 @@ class ImageViewset(ModelViewSet):
         serializer.save(product=product)
 
 class CartViewSet(ModelViewSet):
-    serializer_class = serializer.cart_serializer
+    serializer_class = serializer.CartSerializer
     permission_classes = [permissions.IsCustomer]
 
     def get_queryset(self):

@@ -129,7 +129,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             return cart_item
         return models.cart_item.objects.create(**validated_data)
     
-class cart_serializer(serializers.ModelSerializer): 
+class CartSerializer(serializers.ModelSerializer): 
     
     cart_item_set = CartItemSerializer(many=True, read_only=True)
     class Meta:

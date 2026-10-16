@@ -1,0 +1,20 @@
+{
+  "title": "Add product",
+  "subtitle": "Fill in the details below to list a new item in your store.",
+  "details": "Details",
+  "name": "Title",
+  "namePlaceholder": "e.g. Wireless headphones",
+  "description": "Description",
+  "descriptionPlaceholder": "Describe your product: materials, size, what is included...",
+  "media": "Media",
+  "clickToUpload": "Click to upload",
+  "orDrag": "or drag and drop",
+  "formats": "PNG, JPG or WEBP",
+  "cover": "Cover",
+  "removeImage": "Remove image",
+  "pricingStock": "Pricing & stock",
+  "price": "Price",
+  "currencySymbol": "$",
+  "quantity": "Quantity",
+  "save": "Save product"
+}

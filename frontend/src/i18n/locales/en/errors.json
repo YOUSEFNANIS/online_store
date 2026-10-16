@@ -1,0 +1,7 @@
+{
+  "network": "Cannot reach the server. Check your connection.",
+  "forbidden": "You don't have permission to do that.",
+  "notFound": "We could not find what you asked for.",
+  "server": "Something went wrong on our side. Please try again later.",
+  "generic": "Request failed. Please check your input and try again."
+}

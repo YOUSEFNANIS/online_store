@@ -4,13 +4,31 @@ from .models import customer, seller, User
 from online_store.validator import validate_password
 
 
+def _update_with_user(instance, validated_data):
+    user_data = validated_data.pop('user', {})
+    password = validated_data.pop('password', None)
+
+    with transaction.atomic():
+        user = instance.user
+        for attr, value in user_data.items():
+            setattr(user, attr, value)
+        if password:
+            user.set_password(password)
+        user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+    return instance
+
+
 class SellerSerializer(serializers.ModelSerializer):
 
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.EmailField(source='user.email')
     password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
-    profile_image = serializers.ImageField()
+    profile_image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = seller
@@ -37,9 +55,16 @@ class SellerSerializer(serializers.ModelSerializer):
                 first_name=first_name,
                 last_name=last_name
             )
-            return seller.objects.create(user=user, store_name=store_name)
-    
-    
+            return seller.objects.create(
+                user=user,
+                store_name=store_name,
+                phone_number=validated_data.get('phone_number', ''),
+                profile_image=validated_data.get('profile_image'),
+            )
+
+    def update(self, instance, validated_data):
+        return _update_with_user(instance, validated_data)
+
     def validate(self, attrs):
         if hasattr(attrs, 'password'):
             validate_password(attrs)
@@ -52,7 +77,7 @@ class CustomerSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.EmailField(source='user.email')
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
-    profile_image = serializers.ImageField()
+    profile_image = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = customer
@@ -77,8 +102,15 @@ class CustomerSerializer(serializers.ModelSerializer):
                 first_name=first_name,
                 last_name=last_name
             )
-            return customer.objects.create(user=user)
-    
+            return customer.objects.create(
+                user=user,
+                phone_number=validated_data.get('phone_number', ''),
+                profile_image=validated_data.get('profile_image'),
+            )
+
+    def update(self, instance, validated_data):
+        return _update_with_user(instance, validated_data)
+
     def validate(self, attrs):
         if hasattr(attrs, 'password'):
             validate_password(attrs)

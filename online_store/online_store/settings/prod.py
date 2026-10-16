@@ -21,3 +21,4 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SECURE': True,    # Set to True in production (HTTPS)
     'AUTH_COOKIE_SAMESITE': 'Lax',  # Prevents CSRF
 }
+

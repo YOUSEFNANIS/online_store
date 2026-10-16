@@ -1,33 +1,33 @@
 <template>
   <div>
-    <div class="card">
+    <div class="card table-card">
       <table class="order-table">
         <thead>
           <tr>
-            <th>Customer</th>
-            <th>Value</th>
-            <th>Date</th>
-            <th>Items</th>
-            <th>Location</th>
-            <th>Status</th>
+            <th>{{ $t('sellerOrders.customer') }}</th>
+            <th>{{ $t('sellerOrders.value') }}</th>
+            <th>{{ $t('sellerOrders.date') }}</th>
+            <th>{{ $t('sellerOrders.items') }}</th>
+            <th>{{ $t('sellerOrders.location') }}</th>
+            <th>{{ $t('sellerOrders.status') }}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="order in orders" :key="order.id">
             <td class="bold">{{ order.customer_name }}</td>
-            <td>{{ order.total_value }} LYD</td>
+            <td>{{ order.total_value }} {{ $t('sellerOrders.currency') }}</td>
             <td>{{ order.creation_date }}</td>
             <td>{{ order.total_quantity }}</td>
             <td>{{ order.location }}</td>
             <td>
               <span :class="['status-pill', order.order_status]">
-                {{ order.order_status }}
+                {{ statusLabel(order.order_status) }}
               </span>
             </td>
             <td>
-              <span @click="updateOrderPane(order)" title="Edit this item">
-                <Pencil title="edit"/>
+              <span class="icon-btn" role="button" tabindex="0" @click="updateOrderPane(order)" @keydown.enter="updateOrderPane(order)" :title="$t('sellerOrders.editItem')" :aria-label="$t('sellerOrders.editItem')">
+                <Pencil :title="$t('sellerOrders.edit')"/>
               </span>
             </td>
           </tr>
@@ -45,26 +45,28 @@
             type="text" 
             v-model="orderTemp.location" 
             class="laction-field"
-            placeholder="location"
+            :aria-label="$t('sellerOrders.location')"
+            :placeholder="$t('sellerOrders.location')"
         >
 
         <div class="price-row">
         <input 
             type="text" 
-            placeholder="total price"
-            v-model="orderTemp.price" 
+            :placeholder="$t('sellerOrders.totalPrice')"
+            v-model="orderTemp.price"
             class="price-input"
+            :aria-label="$t('sellerOrders.totalPrice')"
         >
-        
-        <span>LYD</span>
+
+        <span>{{ $t('sellerOrders.currency') }}</span>
     </div>
     </div>
 
     
 
     <div class="actions">
-        <button @click="save" class="btn">save</button>
-        <button @click="handleCancel" class="btn">cancel</button>
+        <button @click="save" class="btn btn-primary">{{ $t('sellerOrders.save') }}</button>
+        <button @click="handleCancel" class="btn btn-outline">{{ $t('sellerOrders.cancel') }}</button>
     </div>
   </div>
   <div class="pagination">
@@ -105,6 +107,10 @@ export default {
         }
     },
     methods: {
+        statusLabel(status) {
+          const key = 'sellerOrders.statuses.' + status
+          return this.$te(key) ? this.$t(key) : status
+        },
         updateOrderPane(order){
           this.showOrderPane = !this.showOrderPane
           this.orderTemp = {...order}
@@ -143,139 +149,114 @@ export default {
 </script>
 
 <style scoped>
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+h1 { font-size: 1.5rem; font-weight: 600; color: var(--color-text); }
+.card { width: fit-content; max-width: 100%; overflow: hidden; }
 
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.table-card {
+  width: 100%;
+  overflow-x: auto;
 }
-
-h1 { font-size: 24px; font-weight: 600; }
-
-/* Table Design */
-.card {
-  width: fit-content;
-  background: white;
-  border: 1px solid #ebebeb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  overflow: hidden;
-}
-
 .order-table {
   width: 100%;
   border-collapse: collapse;
   text-align: center;
+  color: var(--color-text);
 }
-
 .order-table th {
-  background: #f7f7f7;
-  padding: 12px 16px;
-  font-size: 15px;
-  font-weight: bold;
+  background: var(--color-bg);
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-transform: uppercase;
-  color: #616161;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
 }
-
 .order-table td {
-  padding: 16px;
-  border-top: 1px solid #ebebeb;
-  font-size: 14px;
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
 }
-
-.bold { font-weight: 500; }
-
-/* Buttons */
-.btn-black {
-  background: #1a1a1a;
-  color: white;
-  border: none;
-  padding: 8px 16px;
+.order-table tbody tr:first-child td { border-top: none; }
+.order-table tbody tr:hover { background: var(--color-bg); }
+.bold { font-weight: 600; }
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
   cursor: pointer;
-  font-weight: 500;
+  transition: background var(--transition);
 }
-
-/* Status Pills */
+.icon-btn:hover { background: var(--color-primary-soft); }
 .status-pill {
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-transform: capitalize;
 }
-.container {
-          position: fixed;
-          top: 30%;
-          left: 30%;
-          background: white;
-          border: 1px solid #ebebeb;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-          padding: 2.5rem;
-          max-width: 700px
-        }
-.order-id-header {
-    width: 100%;
-    display: flex;
-    background-color: #fcfcfc;
-    justify-content: space-between;
-    border-bottom: 2px solid #000000; /* That specific blue line from your image */
-    margin-bottom: 2rem;
-}
+.completed { background: var(--color-success-soft); color: var(--color-text); }
+.pending { background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.cancelled { background: var(--color-error-soft); color: var(--color-text); }
 
+.container {
+  position: fixed;
+  top: 30%;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  width: min(700px, calc(100vw - 2rem));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 2rem;
+  z-index: 50;
+}
+.order-id-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1.5rem;
+}
 .order-id-header h2 {
-    margin: 0;
-    padding: 0px 0px 20px 0px;
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #111;
-    /* This makes it look like the "typewriter" or clean font in your pic */
+  margin: 0;
+  padding: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
 .form-row {
-    display: flex;
-    width: 100%; /* Changed from fit-content */
-    align-items: flex-end;
-    justify-content: space-between; 
-    border: 20px 0px;
-    gap: 2rem;
-    margin-bottom: 2.5rem;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
-
-.laction-field {
-    flex: 2;
-}
-
+.laction-field { flex: 2; }
 .price-row {
-    display: flex;
-    width: fit-content;
-    align-items: flex-end;
-    gap: 1rem;
-    flex: 1; /* Takes up less space */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  color: var(--color-text-muted);
 }
-
+.price-row input { flex: 1; min-width: 0; }
 .actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    gap: 1rem;
-    margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
-
-input {
-    flex: 1;
-    border: none;
-    border-bottom: 1.5px solid #999;
-    background: transparent;
-    font-size: 1.2rem;
-    outline: none;
-    transition: border-color 0.2s;
+input { flex: 1; min-height: 40px; }
+@media (max-width: 600px) {
+  .form-row { flex-direction: column; align-items: stretch; gap: 1rem; }
 }
-
-input:focus {
-    border-bottom-color: #3b82f6;
-}
-.completed { background: #e3f1df; color: #008060; } /* Subtle Green */
-.pending { background: #fff4d4; color: #8a6116; }   /* Subtle Yellow */
-.cancelled { background: #f9e1e1; color: #a92d2d; } /* Subtle Red */
-
 </style>

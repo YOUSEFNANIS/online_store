@@ -1,12 +1,13 @@
 <template>
   <div class="page">
+    <lang-switcher class="floating-lang" />
 
     <!-- NAVBAR -->
     <nav class="navbar">
       <div class="container navbar-container">
 
         <div class="navbar-left">
-          <span class="logo">The Editorial Marketplace</span>
+          <span class="logo">{{ $t('landing.brand') }}</span>
 
           <div class="nav-links">
             <a
@@ -15,14 +16,14 @@
               :href="item.page"
               class="nav-link"
             >
-              {{ item.title }}
+              {{ $t(item.title) }}
             </a>
           </div>
         </div>
 
         <div class="navbar-right">
-          <router-link class="btn-text" :to="'/login'">Log In</router-link>
-          <router-link class="btn-primary" :to="'/signup'">Sign Up</router-link>
+          <router-link class="btn btn-outline" :to="'/login'">{{ $t('landing.nav.login') }}</router-link>
+          <router-link class="btn btn-primary" :to="'/signup'">{{ $t('landing.nav.signup') }}</router-link>
         </div>
 
       </div>
@@ -35,18 +36,17 @@
         <div class="hero-content">
 
           <h1 class="hero-title">
-            MAKE A <br />
-            <span class="hero-title italic">DEAL</span>
+            {{ $t('landing.hero.titleLine1') }} <br />
+            <span class="hero-title italic">{{ $t('landing.hero.titleLine2') }}</span>
           </h1>
 
           <p class="hero-description">
-            Discover products from local sellers in your area.
-            A marketplace reimagined with editorial precision and high-trust standards.
+            {{ $t('landing.hero.description') }}
           </p>
 
           <div class="hero-actions">
-            <router-link :to="'/signup'" class="btn-primary large">Signup For Free </router-link>
-            <router-link :to="'/products'" class="btn-secondary large">Browse Marketplace</router-link>
+            <router-link :to="'/signup'" class="btn btn-primary large">{{ $t('landing.hero.signupFree') }}</router-link>
+            <router-link :to="'/products'" class="btn btn-outline large">{{ $t('landing.hero.browse') }}</router-link>
           </div>
         </div>
 
@@ -62,10 +62,9 @@
       <div class="container">
 
         <div class="section-header">
-          <h2>Why shop local?</h2>
+          <h2>{{ $t('landing.why.title') }}</h2>
           <p>
-            Our platform bridges the gap between digital convenience
-            and local community heritage.
+            {{ $t('landing.why.subtitle') }}
           </p>
         </div>
 
@@ -76,8 +75,8 @@
             :class="feature"
           >
             <component :is="feature.comp" class="icons"></component>
-            <h3>{{ feature.title }}</h3>
-            <p>{{ feature.description }}</p>
+            <h3>{{ $t(feature.title) }}</h3>
+            <p>{{ $t(feature.description) }}</p>
           </div>
         </div>
 
@@ -88,12 +87,11 @@
       <div class="container cta-container">
 
         <div class="cta-text">
-          <h2>Want To Start Your Business?</h2>
+          <h2>{{ $t('landing.cta.title') }}</h2>
           <p>
-            Join over 2,000 local artisans who have turned their passion
-            into a thriving commercial presence.
+            {{ $t('landing.cta.text', { count: '2,000' }) }}
           </p>
-          <router-link :to="'/signup'" class="btn-primary large" style="width: fit-content; ">Become A Seller</router-link>
+          <router-link :to="'/signup'" class="btn btn-primary large" style="width: fit-content; ">{{ $t('landing.cta.button') }}</router-link>
         </div>
 
         <div class="cta-image">
@@ -106,9 +104,9 @@
       <div class="container">
 
         <div class="cta-text">
-          <h1 style="text-align: center; font-size: 3rem;">Who We Are</h1>
+          <h1 style="text-align: center; font-size: 3rem;">{{ $t('landing.about.title') }}</h1>
           <p>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quas hic, cupiditate vel ipsa, reiciendis delectus aliquid repellendus quaerat au
+            {{ $t('landing.about.text') }}
           </p>
         </div>
       </div>
@@ -118,50 +116,50 @@
       <div class="container footer-grid">
 
         <div>
-          <h4>Marketplace</h4>
+          <h4>{{ $t('landing.footer.marketplace') }}</h4>
           <ul>
-            <li><a href="#">Sustainability</a></li>
-            <li><a href="#">Merchant Terms</a></li>
-            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">{{ $t('landing.footer.sustainability') }}</a></li>
+            <li><a href="#">{{ $t('landing.footer.merchantTerms') }}</a></li>
+            <li><a href="#">{{ $t('landing.footer.privacy') }}</a></li>
           </ul>
         </div>
 
         <div>
-          <h4>Company</h4>
+          <h4>{{ $t('landing.footer.company') }}</h4>
           <ul>
-            <li><a href="#">Careers</a></li>
-            <li><a href="#">Support</a></li>
+            <li><a href="#">{{ $t('landing.footer.careers') }}</a></li>
+            <li><a href="#">{{ $t('landing.footer.support') }}</a></li>
           </ul>
         </div>
         <div>
-          <h3>Contact Us</h3>
+          <h3>{{ $t('landing.footer.contactUs') }}</h3>
 
           <div class="social-links" style="gap: 5px;">
               <a href="#" class="social facebook" target="_blank">
-                  <img src="@/assets/facebook.svg" alt="Facebook" class="contact-icons"/> Facebook
+                  <img src="@/assets/facebook.svg" alt="Facebook" class="contact-icons"/> {{ $t('landing.footer.facebook') }}
               </a>
 
               <a href="#" class="social instagram" target="_blank">
-                  <img src="@/assets/instagram.svg" alt="instagram" class="contact-icons"/> Instagram
+                  <img src="@/assets/instagram.svg" alt="Instagram" class="contact-icons"/> {{ $t('landing.footer.instagram') }}
               </a>
 
               <a href="#" class="social whatsapp" target="_blank">
-                  <img src="@/assets/whats-app.svg" alt="whats app" class="contact-icons"/> WhatsApp
+                  <img src="@/assets/whats-app.svg" alt="WhatsApp" class="contact-icons"/> {{ $t('landing.footer.whatsapp') }}
               </a>
           </div>
       </div>
-        <div style="margin-right: 0;">
-          <h4>Message Us</h4>
+        <div>
+          <h4>{{ $t('landing.footer.messageUs') }}</h4>
           <div style="display:inline-flex">
-            <input placeholder="Email Address" class="email-placeholder"/>
-            <button class="email-submit"> → </button>
+            <input :placeholder="$t('landing.footer.emailPlaceholder')" :aria-label="$t('landing.footer.emailPlaceholder')" class="email-placeholder"/>
+            <button class="email-submit" :aria-label="$t('landing.footer.send')"><span class="arrow">→</span></button>
           </div>
         </div>
 
       </div>
       <div class="footer-content">
         <div class="divider"></div>
-        <p>© 2026 10FastFingers, Inc. All rights reserved.</p>
+        <p>{{ $t('landing.footer.copyright') }}</p>
       </div>
     </footer>
 
@@ -178,30 +176,30 @@ export default {
     return {
       navItems: [
         
-        {title: "Services",
+        {title: "landing.nav.services",
         page: '#our-services'
       },
-        {title: "Who We Are",
+        {title: "landing.nav.whoWeAre",
         page: '#who-we-are'
       },
-      {title: "Join Us",
+      {title: "landing.nav.joinUs",
         page: '#take-actions'
       }
       ],
       features: [
         {
-          title: "Trusted Sellers",
-          description: "Every seller is verified for quality and reliability.",
+          title: "landing.features.trusted.title",
+          description: "landing.features.trusted.description",
           comp: Compass
         },
         {
-          title: "Local Discovery",
-          description: "Find unique products near your location.",
+          title: "landing.features.local.title",
+          description: "landing.features.local.description",
           comp: ArrowLeftRight
         },
         {
-          title: "Fast Delivery",
-          description: "No more long international shipping delays.",
+          title: "landing.features.fast.title",
+          description: "landing.features.fast.description",
           comp: ShoppingBasket
         }
       ]
@@ -211,277 +209,110 @@ export default {
 </script>
 
 <style scoped>
-
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 .page {
-  font-family: Georgia, 'Times New Roman', Times, serif, Arial, sans-serif;
-  color: #0f172a;
-  z-index: 11111;
+  color: var(--color-text);
   width: 100%;
-  border-radius: 10px;
-  font-weight: bold;
-  background: #fbf8fe;
+  background: var(--color-bg);
 }
-
-.container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 0 14px;
-  
-}
+.container { max-width: 1200px; margin: auto; padding: 0 16px; }
 
 /* NAVBAR */
 .navbar {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background: white;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  position: fixed; top: 0; width: 100%; z-index: 10;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
-
-.navbar-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-}
-
-.navbar-left {
-  display: flex;
-  gap: 40px;
-  align-items: center;
-}
-
-.logo {
-  font-size: 20px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 20px;
-}
-
+.navbar-container { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; gap: 16px; flex-wrap: wrap; }
+.navbar-left { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+.logo { font-size: 1.25rem; font-weight: 700; color: var(--color-text); }
+.nav-links { display: flex; gap: 8px; }
 .nav-link {
-  color: #2f5385;
-  border-radius: 0;
-  text-decoration: none;
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 10px;
+  color: var(--color-text); font-weight: 500; text-decoration: none;
+  border-radius: var(--radius-sm); transition: color var(--transition), background var(--transition);
 }
-
-.nav-link.active {
-  color: #2563eb;
-  border-bottom: 2px solid #2563eb;
-}
-
-/* RIGHT */
-.navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.search-box input {
-  padding: 8px 12px;
-    border: 1px solid #ddd;
-}
-
-/* BUTTONS */
-.btn-primary {
-  background: #003466FF;
-  color: white;
-  font-weight: bold;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: #b5b4b4;
-  padding: 10px 20px;
-  font-weight: bold;
-  border: none;
-  color: #003466FF;
-}
-
-.btn-text {
-  background: none;
-  border: none;
-  color: #2563eb;
-  cursor: pointer;
-}
-
-.large {
-  padding: 14px 28px;
-}
+.nav-link:hover { color: var(--color-primary); background: var(--color-primary-soft); }
+.navbar-right { display: flex; align-items: center; gap: 12px; }
 
 /* HERO */
-.hero {
-  padding: 80px 40px;
-  align-items: center;
-  background-image: "https://picsum.photos/seed/retail/800/1000";
-}
-
-.hero-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  align-items: self-start;
-}
-
-.hero-title {
-  margin-top: 20%;
-  font-size: 64px;
-  color: #003466FF;
-}
-
-.italic{
-  color: #335F99;
-  font-style: italic;
-}
-.hero-description {
-  margin-top: 16px;
-  color: #64748b;
-}
-
-.hero-actions {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-}
-
-.hero-image img {
-  width: 80%;
-}
+.hero { padding: 96px 24px 64px; }
+.hero-container { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+.hero-title { margin: 0; font-size: 3.5rem; line-height: 1.1; font-weight: 800; color: var(--color-text); }
+.italic { color: var(--color-primary); font-style: normal; }
+.hero-description { margin-top: 16px; color: var(--color-text-muted); font-size: 1.125rem; max-width: 520px; }
+.hero-actions { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+.large { min-height: 48px; padding: 0.75rem 1.5rem; font-size: 1rem; }
+.hero-image img { width: 100%; max-width: 480px; border-radius: var(--radius-lg); display: block; }
 
 /* SECTION */
-.section {
-  padding: 40px 0;
-  align-self: center;
-  width: 100%;
-  color: rgb(0, 47, 90);
-  background: #F6F2F8;
+.section { padding: 48px 0; width: 100%; background: var(--color-surface); color: var(--color-text); }
+.section-header h2 { font-size: 2rem; margin: 0 0 8px; }
+.section-header p { color: var(--color-text-muted); margin: 0; }
+.icons {
+  padding: 10px; width: 48px; height: 48px; box-sizing: border-box;
+  background: var(--color-primary-soft); color: var(--color-primary);
+  border-radius: var(--radius-md);
 }
-
-.section-header h2 {
-  font-size: 32px;
-}
-.icons{
-  padding: 12px;
-  background: rgb(0, 47, 90);
-  color: white;
-}
-.features {
-  display: flex;
-  gap: 30px;
-  margin-top: 40px;
-}
-
+.features { display: flex; gap: 24px; margin-top: 32px; flex-wrap: wrap; }
 .feature {
-  max-width: 300px;
-  align-items: center;
+  flex: 1 1 240px; max-width: 320px; padding: 20px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
 }
+.feature h3 { margin: 12px 0 4px; }
+.feature p { margin: 0; color: var(--color-text-muted); }
 
-.cta-container {
-  padding: 30px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 40px;
-}
+.cta { background: var(--color-bg); }
+.cta-container { padding: 40px 16px; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 40px; }
+.cta-image img { width: 100%; border-radius: var(--radius-lg); display: block; }
+.cta-text { margin: 10px; gap: 12px; display: grid; }
+.cta-text h2 { margin: 0; }
+.cta-text p { margin: 0; color: var(--color-text-muted); }
 
-.cta-image img {
-  width: 100%;
-}
-
-.cta-text{
-  margin:10px;
-  gap: 10px;
-  display: grid;
-  
-}
-.footer {
-  width: 100%;
-  border-radius: 0;
-  color: rgb(255, 255, 255);
-  background: rgb(0, 47, 90);
-  padding: 60px 10px;
-  gap:10px;
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 40px;
-}
-
+/* FOOTER */
+.footer { width: 100%; color: #fff; background: var(--color-nav); padding: 48px 16px 24px; }
+.footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+.footer h3, .footer h4 { margin: 0 0 12px; color: #fff; }
+.footer ul { list-style: none; padding: 0; margin: 0; }
 .footer a {
-  color: rgb(170, 170, 163);
-  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px;
+  color: #D1D5DB; text-decoration: none; transition: color var(--transition);
 }
-
-.muted {
-  color: #9b9ea2;
-}
+.footer a:hover { color: #fff; text-decoration: underline; }
+.footer li { padding: 2px 0; }
 
 .email-placeholder {
-  width: 70%;
-  padding: 10px 40px 10px 10px; /* Padding-right creates space for the arrow */
-  border: none;
-  border-radius: 0px;
-  border-bottom: 1px solid #7a8aa3; /* The thin grey line */
-  background: white;
-  outline: none;
-  font-family: 'Inter', sans-serif;
-  font-size: 1rem;
-  color: #335F99; /* Navy blue color from your previous hex conversion */
+  width: 70%; min-height: 40px; padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-start-start-radius: var(--radius-sm); border-end-start-radius: var(--radius-sm);
+  border-start-end-radius: 0; border-end-end-radius: 0;
+  background: var(--color-surface); color: var(--color-text); font-size: 1rem;
 }
-
 .email-submit {
-  width: 20%;
-  border: none;
-  border-radius: 3px;
-  border: 1px solid #7a8aa3; /* The thin grey line */
-  background: rgb(0, 47, 90);
-  outline: none;
-  cursor: pointer;
-  font-size: 1rem;
-  color: white; /* Navy blue color from your previous hex conversion */
+  width: 20%; min-width: 44px; min-height: 40px;
+  border: 1px solid var(--color-primary);
+  border-start-end-radius: var(--radius-sm); border-end-end-radius: var(--radius-sm);
+  border-start-start-radius: 0; border-end-start-radius: 0;
+  background: var(--color-primary); color: #fff; font-size: 1rem;
+  transition: background var(--transition);
 }
-.email-submit:hover {
-  transform: translateY(-4px);
-}
-.email-placeholder:focus {
-  border: 1px solid black;
-}
+[dir="rtl"] .arrow { display: inline-block; transform: scaleX(-1); }
+.email-submit:hover { background: var(--color-primary-hover); }
 
-.footer-content {
-  width: 90%;
-  margin: 0 auto;
-}
-.divider {
-  width: 100%;
-  border-top: 1px solid rgb(98, 98, 98);
-  margin-bottom: 20px; /* space below line */
-}
-.footer p {
-  color: #dfdfdf; 
-  font-size: 11px;
-  margin: 0;
-}
+.footer-content { width: 100%; max-width: 1200px; margin: 32px auto 0; }
+.divider { width: 100%; border-top: 1px solid #374151; margin-bottom: 16px; }
+.footer p { color: #D1D5DB; font-size: 0.8rem; margin: 0; }
 
-.social-links {
-    display: flex;
-    flex-direction: column;
-}
+.social-links { display: flex; flex-direction: column; }
+.contact-icons { max-width: 20px; }
 
-.footer li {
-  padding:3px 0 ;
-} 
-
-.contact-icons{
-  max-width: 20px; 
-  align-self: end;
+@media (max-width: 800px) {
+  .hero-container, .cta-container { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .hero-title { font-size: 2.5rem; }
+  .nav-links { display: none; }
 }
 </style>

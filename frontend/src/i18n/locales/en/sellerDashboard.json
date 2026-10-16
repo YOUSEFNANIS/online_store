@@ -1,0 +1,17 @@
+{
+  "title": "Dashboard",
+  "rangeSinceJoin": "Orders received since you joined",
+  "rangeWeek": "Orders received over the last 7 days",
+  "shortSinceJoin": "Orders (since joining)",
+  "shortWeek": "Orders (7 days)",
+  "summaryAria": "Order summary",
+  "today": "Today",
+  "dailyAverage": "Daily average",
+  "ordersPerDay": "Orders per day",
+  "loadingOrders": "Loading orders…",
+  "loadFailed": "Could not load orders. Refresh the page to try again.",
+  "noOrdersSinceJoin": "No orders since you joined yet.",
+  "noOrdersWeek": "No orders in the last 7 days yet.",
+  "orders": "Orders",
+  "tooltipOrders": "Orders: {count}"
+}

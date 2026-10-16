@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import seller, customer
+from django.core.validators import FileExtensionValidator
 
 class product(models.Model):
     name = models.CharField(max_length=20)
@@ -13,7 +14,7 @@ class product(models.Model):
 class productImage(models.Model):
     image = models.ImageField(upload_to='images/')
     product = models.ForeignKey(product, related_name='images', on_delete=models.CASCADE)
-
+    validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp'])]
 
 class order(models.Model):
 

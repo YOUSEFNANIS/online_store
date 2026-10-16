@@ -1,7 +1,7 @@
 <template>
 <div>
   <!-- Floating Button -->
-  <div class="chat-toggle" @click="toggleChat">
+  <div class="chat-toggle" role="button" tabindex="0" :aria-label="$t('chatbot.toggle')" @click="toggleChat" @keyup.enter="toggleChat">
     <MessageCircle/>
   </div>
 
@@ -9,8 +9,8 @@
   <div v-if="isOpen" class="chat-container">
     <!-- Header -->
     <div class="chat-header">
-      <span>Chat</span>
-      <button @click="startchat">+ new chat</button>
+      <span>{{ $t('chatbot.title') }}</span>
+      <button @click="startchat">{{ $t('chatbot.newChat') }}</button>
     </div>
     
     <!-- Messages -->
@@ -28,9 +28,9 @@
       <input
         v-model="newMessage"
         @keyup.enter="sendMessage"
-        placeholder="Type a message..."
+        :placeholder="$t('chatbot.placeholder')"
       />
-      <button @click="sendMessage">Send</button>
+      <button @click="sendMessage">{{ $t('chatbot.send') }}</button>
     </div>
   </div>
   </div>
@@ -47,7 +47,7 @@ export default {
             chat_id: 1,
             isOpen: false,
             newMessage: '',
-            messages: [],
+            messages: [{ text: this.$t('chatbot.greeting'), sender: 'bot' }],
     }
     },
     computed: {
@@ -67,10 +67,11 @@ export default {
             try{
               const url = 'http://127.0.0.1:8000/chat/chat/' + this.chat_id + '/message/'
               
-              const response = await api.post(url, {message: this.newMessage}, {withCredentials: true})            
-              
+              const response = await api.post(url, {message: this.newMessage, language: this.$i18n.locale}, {withCredentials: true})
+              const getResponse = await api.get(url + response.data.chat_id + '/')         
+              console.log(response)
             this.messages.push({
-                text: response.data.response,
+                text: getResponse.data.response,
                 sender: 'bot',
             })}
             catch(error){
@@ -111,90 +112,115 @@ export default {
 <style scoped>
 .chat-toggle {
   position: fixed;
-  bottom: 30px;
-  left: 30px;
-  width: 60px;
-  height: 60px;
-  background: #000000;
+  bottom: 24px;
+  inset-inline-start: 24px;
+  width: 56px;
+  height: 56px;
+  background: var(--color-primary);
   border-radius: 50%;
-  color: white;
-  font-size: 32px;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background var(--transition);
 }
+.chat-toggle:hover { background: var(--color-primary-hover); }
 
 .chat-container {
   position: fixed;
-  bottom: 100px;
-  left: 60px;
+  bottom: 92px;
+  inset-inline-start: 24px;
   width: 500px;
+  max-width: calc(100vw - 48px);
   height: 600px;
-  background: white;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  max-height: calc(100vh - 120px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  z-index: 1200;
 }
 
 .chat-header {
-    font-size: 20px;
-  padding: 10px;
-  background: #575757;
-  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  background: var(--color-nav);
+  color: #fff;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
 }
+.chat-header button {
+  min-height: 40px;
+  padding: 0 12px;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  transition: background var(--transition);
+}
+.chat-header button:hover { background: rgba(255, 255, 255, 0.12); }
 
 .chat-messages {
-    font-size: 25px;
   flex: 1;
-  padding: 10px;
+  padding: 12px;
   overflow-y: auto;
-  background: #f5f5f5;
+  background: var(--color-bg);
 }
 
 .message {
-  max-width: fit-content;
-  padding: 17px 25px;
+  max-width: 85%;
+  width: fit-content;
+  font-size: 1rem;
+  padding: 8px 14px;
   margin-bottom: 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   word-wrap: break-word;
 }
-
 .user {
-  background: #000000;
-  color: white;
-  align-self: flex-end;
-  margin-left: auto;
+  background: var(--color-primary);
+  color: #fff;
+  margin-inline-start: auto;
 }
-
 .bot {
-  background: #e0e0e0;
-  align-self: flex-start;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 .chat-input {
   display: flex;
+  gap: 8px;
   padding: 10px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
-
 .chat-input input {
   flex: 1;
-  padding: 6px;
-  border: 1px solid #ccc;
+  min-height: 40px;
+  min-width: 0;
 }
-
 .chat-input button {
-  margin-left: 8px;
-  padding: 6px 12px;
-  background: #575757;
-  font-size: 25px;
+  min-height: 40px;
+  padding: 0 16px;
+  background: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 600;
   border: none;
-  color: white;
-  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  transition: background var(--transition);
+}
+.chat-input button:hover { background: var(--color-primary-hover); }
+@media (max-width: 600px) {
+  .chat-container { inset-inline-start: 12px; bottom: 84px; max-width: calc(100vw - 24px); }
+  .chat-toggle { inset-inline-start: 12px; bottom: 16px; }
 }
 </style>

@@ -28,8 +28,8 @@ export default {
 .shopify-container {
   max-width: 100%;
   margin: 7% auto;
-  padding: 0 20px;
-  color: #1a1a1a;
+  padding: 0 1.25rem;
+  color: var(--color-text);
   justify-content: center;
   font-size: 1rem;
 }

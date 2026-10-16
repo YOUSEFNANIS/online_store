@@ -1,0 +1,61 @@
+{
+  "brand": "The Editorial Marketplace",
+  "nav": {
+    "services": "Services",
+    "whoWeAre": "Who We Are",
+    "joinUs": "Join Us",
+    "login": "Log In",
+    "signup": "Sign Up"
+  },
+  "hero": {
+    "titleLine1": "MAKE A",
+    "titleLine2": "DEAL",
+    "description": "Discover products from local sellers in your area. A marketplace reimagined with editorial precision and high-trust standards.",
+    "signupFree": "Signup For Free",
+    "browse": "Browse Marketplace"
+  },
+  "why": {
+    "title": "Why shop local?",
+    "subtitle": "Our platform bridges the gap between digital convenience and local community heritage."
+  },
+  "features": {
+    "trusted": {
+      "title": "Trusted Sellers",
+      "description": "Every seller is verified for quality and reliability."
+    },
+    "local": {
+      "title": "Local Discovery",
+      "description": "Find unique products near your location."
+    },
+    "fast": {
+      "title": "Fast Delivery",
+      "description": "No more long international shipping delays."
+    }
+  },
+  "cta": {
+    "title": "Want To Start Your Business?",
+    "text": "Join over {count} local artisans who have turned their passion into a thriving commercial presence.",
+    "button": "Become A Seller"
+  },
+  "about": {
+    "title": "Who We Are",
+    "text": "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quas hic, cupiditate vel ipsa, reiciendis delectus aliquid repellendus quaerat au"
+  },
+  "footer": {
+    "marketplace": "Marketplace",
+    "sustainability": "Sustainability",
+    "merchantTerms": "Merchant Terms",
+    "privacy": "Privacy Policy",
+    "company": "Company",
+    "careers": "Careers",
+    "support": "Support",
+    "contactUs": "Contact Us",
+    "facebook": "Facebook",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp",
+    "messageUs": "Message Us",
+    "emailPlaceholder": "Email Address",
+    "send": "Send",
+    "copyright": "© 2026 10FastFingers, Inc. All rights reserved."
+  }
+}

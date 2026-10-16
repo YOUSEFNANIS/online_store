@@ -8,7 +8,7 @@
 
         <!-- Product Image -->
         <div class="product-img">
-          <img :src="item.first_image">
+          <img :src="item.first_image" :alt="item.product_name">
         </div>
         <div class="product-info">
           <div class="product-name">{{ item.product_name }}</div>
@@ -16,23 +16,23 @@
         </div>
         <!-- Quantity Controls -->
         <div class="qty-controls">
-          <button @click="decreaseQty(index)">-</button>
+          <button :aria-label="$t('cart.decrease')" @click="decreaseQty(index)">-</button>
           <span class="qty">{{ item.quantity }}</span>
-          <button @click="increaseQty(index)">+</button>
+          <button :aria-label="$t('cart.increase')" @click="increaseQty(index)">+</button>
         </div>
         <!-- Remove Item -->
-        <button class="remove-btn" @click="removeItem(index)">✕</button>
+        <button class="remove-btn" :aria-label="$t('cart.remove')" @click="removeItem(index)">✕</button>
 
       </div>
 
     </div>
 
-    <div>
-    <button class="btn" @click="orderNow">
-      order now
+    <div class="cart-actions">
+    <button class="btn btn-cta" @click="orderNow">
+      {{ $t('cart.orderNow') }}
     </button>
-    <button class="btn" @click="save">
-      save
+    <button class="btn btn-outline" @click="save">
+      {{ $t('cart.save') }}
     </button>
     </div>
   </div>
@@ -107,94 +107,103 @@ export default {
 </script>
 
 <style scoped>
-
-.cart-container{
+.cart-container {
   position: fixed;
-
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-
   z-index: 9999;
-
   width: 500px;
+  max-width: calc(100vw - 24px);
   max-height: 95vh;
-
-  background:#e9e9e9;
-  padding:25px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.2);
-
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
-
-/* Scrollable area */
-.cart-items{
-  width:100%;
-  max-height:620px;
-  overflow-y:auto;
+.cart-items {
+  width: 100%;
+  max-height: 620px;
+  overflow-y: auto;
 }
-
-/* Cart item */
-.cart-item{
-  display:grid;
-  grid-template-columns:80px 1fr auto auto;
-  align-items:center;
-  gap:12px;
-  margin-bottom:18px;
+.cart-item {
+  display: grid;
+  grid-template-columns: 80px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
 }
-
-/* Image placeholder */
-.product-img{
-  width:90px;
-  background:#cfcfcf;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.product-img {
+  width: 80px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.product-img img{
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
+.product-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
-/* Product info */
-.product-info {
-  margin-left: 20px;
-  flex-direction:column; /* pushes text to the right */
+.product-info { margin-inline-start: 8px; min-width: 0; }
+.product-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
-
-.product-name{
-  font-size:18px;
+.product-price {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
 }
-
-.product-price{
-  font-size:14px;
-  color:#555;
+.qty-controls {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
-
-/* Quantity buttons */
-.qty-controls{
-  display:flex;
-  border:1px solid #333;
+.qty-controls button {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: none;
+  width: 40px;
+  height: 40px;
+  font-size: 1.1rem;
+  transition: background var(--transition);
 }
-
-.qty-controls button{
-  background:white;
-  border:none;
-  width:28px;
-  height:28px;
-  cursor:pointer;
+.qty-controls button:hover { background: var(--color-bg); }
+.qty {
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
 }
-
-.qty{
-  width:30px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.remove-btn {
+  min-width: 40px;
+  min-height: 40px;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
 }
-
-/* Remove button */
-
-
+.remove-btn:hover { color: var(--color-error); background: var(--color-error-soft); }
+.cart-actions { display: flex; gap: 10px; }
+@media (max-width: 480px) {
+  .cart-container { padding: 16px; }
+  .cart-item { grid-template-columns: 64px 1fr auto; }
+  .remove-btn { grid-column: 3; grid-row: 1; }
+  .qty-controls { grid-column: 2 / 4; }
+  .product-img { width: 64px; }
+}
 </style>

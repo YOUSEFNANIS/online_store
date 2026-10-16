@@ -7,34 +7,34 @@
       <button class="btn-black" @click="createNewOrder">Create order</button>
     </div> -->
 
-    <div class="card">
+    <div class="card table-card">
       <table class="order-table">
         <thead>
           <tr>
-            <th>Store</th>
-            <th>Value</th>
-            <th>Date</th>
-            <th>Items</th>
-            <th>Location</th>
-            <th>Status</th>
+            <th>{{ $t('customerOrders.store') }}</th>
+            <th>{{ $t('customerOrders.value') }}</th>
+            <th>{{ $t('customerOrders.date') }}</th>
+            <th>{{ $t('customerOrders.items') }}</th>
+            <th>{{ $t('customerOrders.location') }}</th>
+            <th>{{ $t('customerOrders.status') }}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="order in orders" :key="order.id">
             <td class="bold">{{ order.store_name }}</td>
-            <td>{{ order.total_value }} LYD</td>
+            <td>{{ order.total_value }} {{ $t('customerOrders.currency') }}</td>
             <td>{{ order.creation_date }}</td>
             <td>{{ order.total_quantity }}</td>
             <td>{{ order.location }}</td>
             <td>
               <span :class="['status-pill', order.order_status]">
-                {{ order.order_status }}
+                {{ statusLabel(order.order_status) }}
               </span>
             </td>
             <td class="actions">
-              <span @click.stop="updateOrderPane(order)" title="Edit order status">
-                <Pencil title="edit"/>
+              <span class="icon-btn" role="button" tabindex="0" @click.stop="updateOrderPane(order)" @keydown.enter="updateOrderPane(order)" :title="$t('customerOrders.editStatus')" :aria-label="$t('customerOrders.editStatus')">
+                <Pencil :title="$t('customerOrders.edit')"/>
               </span>
             </td>
           </tr>
@@ -44,13 +44,13 @@
       <transition name="pop">
       <div v-if="showOrderPane" class="order-card" ref="orderPane">
         <div class="card-header">
-          <span class="order-id">#order: {{ orderTemp.id }}</span>
+          <span class="order-id">{{ $t('customerOrders.orderNumber', { id: orderTemp.id }) }}</span>
           
           <div class="select-wrapper">
             <select v-model="orderTemp.order_status" :class="['status-pill', orderTemp.order_status]">
-              <option class="pending" value="pending">Pending</option>
-              <option class="cancelled" value="cancelled">cancelled</option>
-              <option class="completed" value="completed">completed</option>
+              <option class="pending" value="pending">{{ $t('customerOrders.statuses.pending') }}</option>
+              <option class="cancelled" value="cancelled">{{ $t('customerOrders.statuses.cancelled') }}</option>
+              <option class="completed" value="completed">{{ $t('customerOrders.statuses.completed') }}</option>
             </select>
           </div>
         </div>
@@ -58,8 +58,8 @@
         <hr class="divider" />
 
         <div class="card-actions">
-          <button @click="updateOrderStatus" class="btn btn-save">save</button>
-          <button @click="showOrderPane = false" class="btn btn-cancel">cancel</button>
+          <button @click="updateOrderStatus" class="btn btn-primary">{{ $t('customerOrders.save') }}</button>
+          <button @click="showOrderPane = false" class="btn btn-outline">{{ $t('customerOrders.cancel') }}</button>
         </div>
       </div>
     </transition>
@@ -107,6 +107,10 @@ export default {
         }
     },
     methods: {
+        statusLabel(status) {
+          const key = 'customerOrders.statuses.' + status
+          return this.$te(key) ? this.$t(key) : status
+        },
         handleOrderPaneOutsideClick(event) {
           if (this.showOrderPane && this.$refs.orderPane && !this.$refs.orderPane.contains(event.target)) {
               this.showOrderPane = false;
@@ -150,152 +154,100 @@ export default {
 </script>
 
 <style scoped>
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+h1 { font-size: 1.5rem; font-weight: 600; color: var(--color-text); }
+.card { width: fit-content; max-width: 100%; overflow: hidden; }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.table-card {
+  width: 100%;
+  overflow-x: auto;
 }
-
-h1 { font-size: 24px; font-weight: 600; }
-
-/* Table Design */
-.card {
-  width: fit-content;
-  background: white;
-  border: 1px solid #ebebeb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  overflow: hidden;
-}
-
 .order-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
+  text-align: start;
+  color: var(--color-text);
 }
-
 .order-table th {
-  background: #f7f7f7;
-  padding: 12px 16px;
-  font-size: 15px;
-  font-weight: bold;
+  background: var(--color-bg);
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-transform: uppercase;
-  color: #616161;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
 }
-
 .order-table td {
-  padding: 16px;
-  border-top: 1px solid #ebebeb;
-  font-size: 14px;
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
 }
-
-.bold { font-weight: 500; }
-
-/* Buttons */
-.btn-black {
-  background: #1a1a1a;
-  color: white;
-  border: none;
-  padding: 8px 16px;
+.order-table tbody tr:first-child td { border-top: none; }
+.order-table tbody tr:hover { background: var(--color-bg); }
+.bold { font-weight: 600; }
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
   cursor: pointer;
-  font-weight: 500;
+  transition: background var(--transition);
 }
-
-.actions button {
-  background: none;
-  border: none;
-  color: #005bd3;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-/* Status Pills */
+.icon-btn:hover { background: var(--color-primary-soft); }
 .status-pill {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-transform: capitalize;
 }
+.completed { background: var(--color-success-soft); color: var(--color-text); }
+.pending { background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.cancelled { background: var(--color-error-soft); color: var(--color-text); }
 
-
-/* The Card Structure */
 .order-card {
-  background-color: #ffffff; /* Light gray background */
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   position: fixed;
   top: 30%;
-  left: 30%;
-  padding: 24px;
-  width: 30%;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  padding: 1.5rem;
+  width: min(420px, calc(100vw - 2rem));
+  z-index: 50;
 }
-
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
-
 .order-id {
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
-
-/* Pill Select Styling */
 select {
-  padding: 8px 16px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-  background-color: white;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
 }
-
+select.status-pill { border-radius: var(--radius-sm); }
 .divider {
   border: none;
-  border-top: 1px solid #333;
-  margin: 15px 0;
+  border-top: 1px solid var(--color-border);
+  margin: 1rem 0;
 }
-
-/* Button Layout */
-.card-actions {
-  display: flex;
-  gap: 15px;
-}
-
-.btn {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  font-size: 1.1rem;
-  font-weight: bold;
-  cursor: pointer;
-  color: white;
-  background-color: black;
-  transition: transform 0.1s;
-}
-
-.btn:active {
-  transform: scale(0.96);
-}
-
-/* --- ANIMATION --- */
-.pop-enter-active, .pop-leave-active {
-  transition: all 0.3s ease-out;
-}
-
-.pop-enter-from {
-  opacity: 0;
-  transform: translateY(20px) scale(0.95);
-}
-
-.pop-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
-}
-.completed { background: #e3f1df; color: #008060; } /* Subtle Green */
-.pending { background: #fff4d4; color: #8a6116; }   /* Subtle Yellow */
-.cancelled { background: #f9e1e1; color: #a92d2d; } /* Subtle Red */
-
+.card-actions { display: flex; gap: 0.75rem; }
+.card-actions .btn { flex: 1; }
+.pop-enter-active, .pop-leave-active { transition: opacity 0.2s ease; }
+.pop-enter-from, .pop-leave-to { opacity: 0; }
 </style>

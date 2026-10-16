@@ -8,19 +8,19 @@
       </div>
 
       <h1 class="title">
-        شكراً لطلبك المنتج
+        {{ $t('thankYou.title') }}
       </h1>
 
       <p class="message">
-        سيتم التواصل معك من قبل فريقنا في أقرب وقت ممكن
+        {{ $t('thankYou.message') }}
       </p>
 
       <!-- Optional Order Number -->
       <p v-if="orderId" class="order-id">
-        رقم الطلب: <strong>#{{ orderId }}</strong>
+        {{ $t('thankYou.orderNumber') }} <strong>#{{ orderId }}</strong>
       </p>
-      <router-link :to="'/'"  class="btn">
-        العودة للصفحة الرئيسية
+      <router-link :to="'/'"  class="btn btn-primary">
+        {{ $t('thankYou.home') }}
       </router-link>
 
     </div>
@@ -42,68 +42,52 @@ export default {
 </script>
 
 <style scoped>
-
 .success-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  direction: rtl;
   padding: 20px;
 }
-
 .success-card {
-  background: white;
-  padding: 50px 40px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 48px 32px;
   text-align: center;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  animation: fadeIn 0.5s ease;
+  box-shadow: var(--shadow-md);
 }
-
 .success-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 25px;
-  background: #22c55e;
-  color: white;
-  font-size: 40px;
-  font-weight: bold;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border: 2px solid var(--color-success);
+  font-size: 36px;
+  font-weight: 700;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .title {
-  font-size: 26px;
+  font-size: 1.6rem;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin: 0 0 10px;
+  color: var(--color-text);
 }
-
 .message {
-  font-size: 18px;
-  color: #555;
-  margin-bottom: 25px;
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  margin: 0 0 24px;
 }
-
 .order-id {
-  font-size: 16px;
-  margin-bottom: 30px;
-  color: #333;
+  font-size: 1rem;
+  margin: 0 0 28px;
+  color: var(--color-text);
 }
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 </style>

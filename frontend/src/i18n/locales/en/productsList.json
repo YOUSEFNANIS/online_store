@@ -1,0 +1,41 @@
+{
+  "filters": "Filters",
+  "clearAll": "Clear all",
+  "priceGroup": "Price (LYD)",
+  "min": "Min",
+  "max": "Max",
+  "minPrice": "Min price",
+  "maxPrice": "Max price",
+  "ok": "OK",
+  "availability": "Availability",
+  "inStockOnly": "In stock only",
+  "productsCount": "product | products",
+  "forQuery": "for “{query}”",
+  "sortBy": "Sort by:",
+  "sort": {
+    "newest": "Newest",
+    "priceAsc": "Price: low to high",
+    "priceDesc": "Price: high to low",
+    "nameAsc": "Name: A–Z",
+    "nameDesc": "Name: Z–A"
+  },
+  "view": "View",
+  "gridView": "Grid view",
+  "listView": "List view",
+  "currency": "LYD",
+  "emptyTitle": "No products found",
+  "emptyText": "Try a different search or check back later.",
+  "pagination": "Pagination",
+  "prevPage": "Previous page",
+  "nextPage": "Next page",
+  "chipRange": "{min} – {max} LYD",
+  "chipFrom": "From {min} LYD",
+  "chipUpTo": "Up to {max} LYD",
+  "chipInStock": "In stock",
+  "ranges": {
+    "any": "Any price",
+    "under": "Under {n}",
+    "between": "{a} – {b}",
+    "over": "Over {n}"
+  }
+}

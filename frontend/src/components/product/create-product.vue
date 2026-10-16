@@ -1,55 +1,74 @@
 <template>
-      <div class="main">
-        <h1 class="page-title">Add product</h1>
-        <!-- TITLE -->
-        <div class="card">
-          <label class="label">Title</label>
-          <input v-model="product.name" class="input"/>
-        </div>
+  <div class="main">
+    <header class="page-head">
+      <h1 class="page-title">{{ $t('createProduct.title') }}</h1>
+      <p class="page-sub">{{ $t('createProduct.subtitle') }}</p>
+    </header>
 
-        <!-- DESCRIPTION -->
-        <div class="card">
-          <label class="label">Description</label>
-          <textarea v-model="product.description" class="textarea"></textarea>
-        </div>
+    <form class="layout" @submit.prevent="saveProduct">
+      <div class="col-main">
+        <section class="card">
+          <h2 class="card-title">{{ $t('createProduct.details') }}</h2>
 
-        <!-- MEDIA -->
-        <div class="card">
-          <label class="label">Media</label>
-
-          <div class="media-upload">
-            <input type="file" @change="uploadImage">
-          </div>
-
-          <div class="images">
-            <li v-for="(img, index) in imagePreviews"  :key="index">
-              <div class="image-item">
-                  <img :src="img"/>
-                  <button class="remove-btn" @click="removeElement(index)">x</button>
-              </div>
-                
-            </li>
-          </div>
-        </div>
-
-        <!-- PRICING -->
-        <div class="card">
-
-            <div class="row">
-            <div  class="field">
-              <label class="label">Price</label>
-              <input type="number" v-model="product.price" class="input"/>
+          <div class="field">
+            <div class="label-row">
+              <label class="label" for="p-name">{{ $t('createProduct.name') }}</label>
+              <span class="hint">{{ product.name.length }}/20</span>
             </div>
-            <div  class="field">
-                <label class="label">Quantity</label>
-                <input type="number" v-model="product.inventory" class="input"/>
+            <input id="p-name" v-model="product.name" class="input" maxlength="20" :placeholder="$t('createProduct.namePlaceholder')" required/>
           </div>
+
+          <div class="field">
+            <label class="label" for="p-desc">{{ $t('createProduct.description') }}</label>
+            <textarea id="p-desc" v-model="product.description" class="textarea" :placeholder="$t('createProduct.descriptionPlaceholder')"></textarea>
           </div>
-          <button class="save-btn" @click="saveProduct">
-          Save product
-        </button>
-        </div>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">{{ $t('createProduct.media') }}</h2>
+
+          <label class="dropzone" :class="{ active: dragging }"
+                 @dragover.prevent="dragging = true" @dragleave="dragging = false" @drop.prevent="onDrop">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span class="drop-title"><b>{{ $t('createProduct.clickToUpload') }}</b> {{ $t('createProduct.orDrag') }}</span>
+            <span class="hint">{{ $t('createProduct.formats') }}</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp" multiple @change="uploadImage">
+          </label>
+
+          <ul v-if="imagePreviews.length" class="images">
+            <li v-for="(img, index) in imagePreviews" :key="img" class="image-item">
+              <img :src="img" alt=""/>
+              <span v-if="index === 0" class="badge">{{ $t('createProduct.cover') }}</span>
+              <button type="button" class="remove-btn" :aria-label="$t('createProduct.removeImage')" @click="removeElement(index)">&times;</button>
+            </li>
+          </ul>
+        </section>
       </div>
+
+      <aside class="col-side">
+        <section class="card">
+          <h2 class="card-title">{{ $t('createProduct.pricingStock') }}</h2>
+
+          <div class="field">
+            <label class="label" for="p-price">{{ $t('createProduct.price') }}</label>
+            <div class="input-affix">
+              <span class="affix">{{ $t('createProduct.currencySymbol') }}</span>
+              <input id="p-price" type="number" min="0" step="0.01" v-model="product.price" class="input" placeholder="0.00" required/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="p-qty">{{ $t('createProduct.quantity') }}</label>
+            <input id="p-qty" type="number" min="0" v-model="product.inventory" class="input"/>
+          </div>
+
+          <button type="submit" class="btn btn-primary save-btn">{{ $t('createProduct.save') }}</button>
+        </section>
+      </aside>
+    </form>
+  </div>
 </template>
 
 <script>
@@ -58,7 +77,7 @@ import api from '@/services/api';
 
 
 export default {
-  
+
   data() {
     return {
       product: {
@@ -70,23 +89,34 @@ export default {
         imagesfile: [],
         imagePreviews: [],
         product_id: null,
+        dragging: false,
     }
   },
-  
+
   methods: {
 
     uploadImage(e) {
-      const file = e.target.files[0]
-      const url = URL.createObjectURL(file)
-
-      if (!file) return
-
-      this.imagesfile.push(file)
-      this.imagePreviews.push(url);
+      this.addFiles(e.target.files)
+      e.target.value = ""
     },
 
-    removeElement(e){
-      this.imagePreviews.splice(e, 1)
+    onDrop(e) {
+      this.dragging = false
+      this.addFiles(e.dataTransfer.files)
+    },
+
+    addFiles(files) {
+      for (const file of files) {
+        if (!file.type.startsWith("image/")) continue
+        this.imagesfile.push(file)
+        this.imagePreviews.push(URL.createObjectURL(file))
+      }
+    },
+
+    removeElement(i){
+      URL.revokeObjectURL(this.imagePreviews[i])
+      this.imagePreviews.splice(i, 1)
+      this.imagesfile.splice(i, 1)
     },
 
     async saveProduct() {
@@ -106,7 +136,7 @@ export default {
                   formData.append("product", this.product_id)
                 }
                 const url = '/core/products/' + this.product_id + '/images/';
-                    const response = await api.post(url,  formData,{headers: 
+                    const response = await api.post(url,  formData,{headers:
                         {
                           "Content-Type": "multipart/form-data"
                         }})
@@ -116,151 +146,88 @@ export default {
                       console.log(error.response)
               }
 
-              
+
     }
-    
+
   }
 }
 </script>
 
 <style scoped>
+.main { width: 100%; max-width: 1040px; margin: 0 auto; padding: 32px 16px 48px; box-sizing: border-box; font-size: 1rem; }
+.page-head { margin-bottom: 24px; }
+.page-title { color: var(--color-text); margin: 0 0 4px; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+.page-sub { margin: 0; color: var(--color-text-muted); }
 
-.main{
-  flex:3;
-  font-size: large;
-  display: flex;
-  margin-top: 5%;
-  flex-direction: column;
-  align-items: center;
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.col-main { display: flex; flex-direction: column; gap: 24px; }
+.col-side { position: sticky; top: 16px; }
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
 }
+.card-title { margin: 0 0 20px; font-size: 1.05rem; font-weight: 600; color: var(--color-text); }
 
-.sidebar{
-  flex:1;
+.field { margin-bottom: 18px; }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; }
+.label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: var(--color-text); }
+.hint { font-size: 0.8rem; color: var(--color-text-muted); }
+
+.input, .textarea {
+  width: 100%; box-sizing: border-box; min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
+.textarea { min-height: 140px; resize: vertical; }
+.input:focus, .textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--focus-ring); }
 
-.card{
-  background:white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 60%;
-  padding:20px;
-  border-radius:8px;
-  margin-bottom:20px;
-  box-shadow:0 1px 2px rgba(0,0,0,0.05);
+.input-affix { position: relative; }
+.input-affix .input { padding-inline-start: 30px; }
+.affix { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+
+.dropzone {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 32px 16px; text-align: center; cursor: pointer;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  transition: border-color var(--transition), background var(--transition);
 }
+.dropzone:hover, .dropzone.active { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary); }
+.dropzone input { display: none; }
+.drop-title { color: var(--color-text); }
+.drop-title b { color: var(--color-primary); }
 
-.label{
-  font-weight:600;
-  display:block;
-  margin-bottom:6px;
+.images { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin: 16px 0 0; padding: 0; list-style: none; }
+.image-item { position: relative; aspect-ratio: 1; }
+.image-item img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); box-sizing: border-box; }
+.badge { position: absolute; inset-inline-start: 6px; bottom: 6px; padding: 2px 8px; font-size: 0.72rem; font-weight: 600; border-radius: 999px; background: rgba(17, 24, 39, 0.75); color: #fff; }
+
+.remove-btn {
+  position: absolute; top: 6px; inset-inline-end: 6px;
+  width: 28px; height: 28px; padding: 0;
+  border: none; border-radius: 50%;
+  background: rgba(17, 24, 39, 0.75); color: #fff;
+  font-size: 1.1rem; line-height: 1; cursor: pointer;
+  transition: background var(--transition);
 }
+.remove-btn:hover { background: var(--color-error); }
 
-.input{
-  width:90%;
-  padding:10px;
-  border:2px solid #919090;
-  border-radius:6px;
-  margin-bottom:12px;
+.save-btn { width: 100%; min-height: 46px; margin-top: 4px; }
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+  .col-side { position: static; }
+  .card { padding: 18px; }
 }
-
-.textarea{
-  width:90%;
-  height:120px;
-  border:2px solid #919090;
-  border-radius:6px;
-  padding:10px;
-}
-
-.section-title{
-  margin-bottom:10px;
-}
-
-.row{
-  display:flex;
-  width: 60%;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 23px;
-  gap:10px;
-}
-
-.row input{
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.media-upload{
-  border:2px dashed #919090;
-  width: 90%;
-  padding:20px;
-  text-align:center;
-}
-
-.images{
-  display:flex;
-  flex-wrap:wrap;
-   gap:25px;
-  margin-top:10px;
-}
-
-.images img{
-  width:30% + 6px;
-  height:30% + 6px;
-  padding: 10px;
-  max-width: 300px;
-  max-height:300px;
-  border-radius: 4px;
-  border: 3px solid #000000;   /* 4px is "thick", solid style, using existing light gray */
-  box-sizing: border-box;
-}
-
-.save-btn{
-  width:60%;
-  padding:12px;
-  background:#000000;
-  color:white;
-  border:none;
-  border-radius:6px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.save-btn:hover{
-  background:#1e1e1e;
-}
-
-.image-item{
-  position: relative;
-  display: inline-block;
-}
-
-.remove-btn{
-  position: absolute;
-  top: 6px;
-  right: 6px;
-
-  width: 26px;
-  height: 26px;
-
-  border: none;
-  border-radius: 50%;
-
-  background: #ff4d4f;
-  color: white;
-
-  font-size: 16px;
-  font-weight: bold;
-  line-height: 26px;
-
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.remove-btn:hover{
-  background: #d9363e;
-  transform: scale(1.1);
-}
-
-
 </style>

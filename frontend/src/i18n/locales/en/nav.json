@@ -1,0 +1,18 @@
+{
+  "logoAlt": "Logo",
+  "searchPlaceholder": "Search products...",
+  "balance": "Balance",
+  "login": "login",
+  "accountMenu": "Account menu",
+  "accountBalance": "Account balance",
+  "profile": "Profile",
+  "terms": "Terms of Use",
+  "logout": "Logout",
+  "newProduct": "New product",
+  "createProduct": "Create Product",
+  "products": "Products",
+  "productsList": "Products List",
+  "orders": "Orders",
+  "ordersList": "Orders List",
+  "settings": "Settings"
+}

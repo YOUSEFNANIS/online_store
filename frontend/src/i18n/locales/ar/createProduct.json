@@ -1,0 +1,20 @@
+{
+  "title": "إضافة منتج",
+  "subtitle": "املأ التفاصيل أدناه لإدراج منتج جديد في متجرك.",
+  "details": "التفاصيل",
+  "name": "العنوان",
+  "namePlaceholder": "مثال: سماعات لاسلكية",
+  "description": "الوصف",
+  "descriptionPlaceholder": "صف منتجك: الخامات والحجم ومحتويات العبوة...",
+  "media": "الوسائط",
+  "clickToUpload": "انقر للرفع",
+  "orDrag": "أو اسحب الملفات وأفلتها هنا",
+  "formats": "PNG أو JPG أو WEBP",
+  "cover": "الغلاف",
+  "removeImage": "إزالة الصورة",
+  "pricingStock": "السعر والمخزون",
+  "price": "السعر",
+  "currencySymbol": "$",
+  "quantity": "الكمية",
+  "save": "حفظ المنتج"
+}

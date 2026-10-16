@@ -1,0 +1,18 @@
+{
+  "logoAlt": "الشعار",
+  "searchPlaceholder": "ابحث عن المنتجات...",
+  "balance": "الرصيد",
+  "login": "تسجيل الدخول",
+  "accountMenu": "قائمة الحساب",
+  "accountBalance": "رصيد الحساب",
+  "profile": "الملف الشخصي",
+  "terms": "شروط الاستخدام",
+  "logout": "تسجيل الخروج",
+  "newProduct": "منتج جديد",
+  "createProduct": "إنشاء منتج",
+  "products": "المنتجات",
+  "productsList": "قائمة المنتجات",
+  "orders": "الطلبات",
+  "ordersList": "قائمة الطلبات",
+  "settings": "الإعدادات"
+}

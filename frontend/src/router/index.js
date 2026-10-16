@@ -3,6 +3,7 @@ import NotFound from '@/components/helperComponents/not-found.vue'
 import ProductPage from '@/components/product/product-page.vue'
 import ProductsList from '@/components/product/products-list.vue'
 import ThankYou from '@/components/helperComponents/thank-you.vue'
+import TermsOfUse from '@/components/helperComponents/terms-of-use.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import signupMainpage from '@/signup/signup-mainpage.vue'
 import LogIn from '@/signup/log-in.vue'
@@ -27,6 +28,7 @@ const router = createRouter({
     {path: '/login', component: LogIn},
     {path: '/order', component: CreateOrder},
     {path: '/thankyou', component: ThankYou},
+    {path: '/terms', component: TermsOfUse},
     {path: '/orderslist', component: OrderWrapper},
     {path: '/settings', component: CustomerSettings},
     {path: '/products/create', component: CreateProduct, meta: { 

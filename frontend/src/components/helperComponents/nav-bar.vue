@@ -6,7 +6,7 @@
       <router-link :to="'/'" class="logo-btn" >
         <img 
           src="@/assets/ysfstore.webp" 
-          alt="Logo" 
+          :alt="$t('nav.logoAlt')" 
           class="logo-img"
         />
       </router-link>
@@ -17,22 +17,29 @@
             type="text" 
             v-model="searchQuery" 
             @keyup.enter="debouncedSearch" 
-            placeholder="Search products..."
+            :placeholder="$t('nav.searchPlaceholder')"
             class="search-input"
           >
         </div>
         <div class="access-buttons">
-          <h1 class="balance" v-if="role==='seller'">total balance: {{user_data.balance}} LYD</h1>
+          <lang-switcher class="nav-lang" />
+          <div class="balance" v-if="role==='seller'" :aria-label="$t('nav.accountBalance')">
+            <span class="balance-label">{{ $t('nav.balance') }}</span>
+            <span class="balance-value">{{ formattedBalance }}</span>
+          </div>
 
           <router-link :to="'/login'" v-else-if="role===null" class="login-btn">
-            login 
+            {{ $t('nav.login') }}
             <LogIn class="icon"/>
           </router-link>
 
           <ShoppingCart v-else-if="role==='customer'" class="cart"  @click.stop="showCart = !showCart"/>
         </div>
         <div>
-        <img :src="profile_image" class="profile-image" @click="showMenu = !showMenu"  ref="MenuContainer">
+        <button type="button" class="profile-btn" :aria-label="$t('nav.accountMenu')" :aria-expanded="showMenu"
+            @click.stop="showMenu = !showMenu" ref="MenuContainer">
+            <img :src="profile_image" class="profile-image" alt="">
+          </button>
           <div v-if="showMenu" class="dropdown">
 
             <div class="dropdown-content">
@@ -40,8 +47,18 @@
               <p class="email">{{user_data.email}}</p>
               <hr />
 
+              <router-link to="/settings" class="dropdown-item" @click="showMenu = false">
+                <User class="icon" aria-hidden="true"/>
+                {{ $t('nav.profile') }}
+              </router-link>
+              <router-link to="/terms" class="dropdown-item" @click="showMenu = false">
+                <FileText class="icon" aria-hidden="true"/>
+                {{ $t('nav.terms') }}
+              </router-link>
+              <hr />
+
               <button class="logout" @click="LogOut">
-                Logout
+                {{ $t('nav.logout') }}
                 <LogOut/>
               </button>
             </div>
@@ -52,21 +69,25 @@
       
 
       <router-link v-if="role==='seller'" :class="tab === '/products/create' ? 'menu-item selected' : 'menu-item'" 
-          title="Create Product" :to="'/products/create'">
-        <CirclePlus class="icon"/>
+          :title="$t('nav.createProduct')" :to="'/products/create'">
+        <CirclePlus class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('nav.newProduct') }}</span>
       </router-link>
-      <router-link :to="'/products'" title="Products List" 
+      <router-link :to="'/products'" :title="$t('nav.productsList')" 
       :class="tab === '/products' ? 'menu-item selected' : 'menu-item'">
-        <List  class="icon"/>
+        <List class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('nav.products') }}</span>
       </router-link>
-      <router-link :to="'/orderslist'"  title="Orders List" 
+      <router-link :to="'/orderslist'"  :title="$t('nav.ordersList')" 
       :class="tab === '/orderslist' ? 'menu-item selected' : 'menu-item'">
-        <Package2 class="icon"/>
+        <Package2 class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('nav.orders') }}</span>
       </router-link>
       
-      <router-link :to="'/settings'"  title="Settings" 
+      <router-link :to="'/settings'"  :title="$t('nav.settings')" 
       :class="tab === '/settings' ? 'menu-item selected' : 'menu-item'">
-        <settings class="icon"/>
+        <Settings class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('nav.settings') }}</span>
       </router-link>
 
     </nav>
@@ -78,12 +99,13 @@
 <script>
 import { useRoleStore } from '@/stores/role'
 import api from '@/services/api';
-import { ShoppingCart, Search, LogOut ,Settings, Package2, LogIn, CirclePlus, List } from '@lucide/vue';
+import { ShoppingCart, Search, LogOut ,Settings, Package2, LogIn, CirclePlus, List, User, FileText } from '@lucide/vue';
+import LangSwitcher from './lang-switcher.vue';
 import userIcon from '@/assets/user.svg';
 
 export default {
   name: "Navbar",
-  components: {ShoppingCart, Search, LogOut, Settings, Package2,CirclePlus , LogIn, List},
+  components: {LangSwitcher, ShoppingCart, Search, LogOut, Settings, Package2,CirclePlus , LogIn, List, User, FileText},
   beforeUnmount() {
     document.removeEventListener('click', this.handleCartOutsideClick);
     document.removeEventListener('click', this.handleMenuOutsideClick);
@@ -103,6 +125,11 @@ export default {
     },
     role() {
       return this.roleStore.role
+    },
+    formattedBalance(){
+      const b = Number(this.user_data?.balance)
+      if (this.user_data?.balance === undefined || Number.isNaN(b)) return '— ' + this.$t('common.currency')
+      return b.toLocaleString(this.$i18n.locale === 'ar' ? 'ar-EG' : 'en-US', { maximumFractionDigits: 2 }) + ' ' + this.$t('common.currency')
     },
     profile_image(){
       return this.user_data?.profile_image || userIcon;
@@ -127,8 +154,8 @@ export default {
   }
     },
     handleMenuOutsideClick(event) {
-      if (this.isOpen && this.$refs.MenuContainer && !this.$refs.MenuContainer.contains(event.target)) {
-        this.isOpen = false;
+      if (this.showMenu && this.$refs.MenuContainer && !this.$refs.MenuContainer.contains(event.target)) {
+        this.showMenu = false;
       }
     },
 
@@ -169,229 +196,264 @@ export default {
 </script>
 
 <style scoped>
-.navbar-wrapper{
+.navbar-wrapper {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;  
+  flex-wrap: wrap;
 }
 .navbar {
   position: fixed;
   top: 0;
+  inset-inline-start: 0;
+  width: 100%;
   height: 60px;
-  margin-bottom: 0;
-  background-color: #475569;
+  background-color: var(--color-nav);
   justify-content: space-between;
   align-items: center;
   display: inline-flex;
-  padding: 0.2%;
-  border-radius: 0px;
-  top: 0;
-  left: 0;
-  width: 100%;
+  padding: 0 0.5%;
   z-index: 1000;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 .logo-btn {
   display: flex;
   align-items: center;
-  background-color: #000000;
-  margin-right: 10%;
-  margin-left: 1%;
-  font-size: 20px;
-  cursor: pointer;
-  transition: 0.2s ease;
+  margin-inline-end: 5%;
+  margin-inline-start: 1%;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition);
 }
+.logo-btn:hover { opacity: 0.85; }
 .logo-img {
-  height: 3rem;
+  height: 2.75rem;
   width: auto;
 }
 .search-container {
   display: flex;
   align-items: center;
   margin: auto;
-  background-color: #444; 
-  opacity: 70%;
-  border: 1px solid #6b6b6b; 
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
-  padding: 0.5rem 20px; 
-  height: 50%;
+  padding: 0 16px;
+  height: 40px;
   width: 95%;
   max-width: 600px;
   overflow: hidden;
-  box-sizing: border-box; /* Ensures padding doesn't affect total width */
-  transition: border-color 0.2s, box-shadow 0.2s; /* Smooth interactions */
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 .search-container:focus-within {
-  border-color: #cdcdcd;
+  border-color: #fff;
+  box-shadow: var(--focus-ring);
 }
 .search-icon {
-  color: #a0a0a0; 
-  margin-right:auto; 
-  flex-shrink: 0; /* Prevents icon from squishing */
+  color: #fff;
+  margin-inline-end: 10px;
+  flex-shrink: 0;
 }
-.search-input {
-  /* Remove default input styling */
+.search-input,
+.search-input:focus {
   border: none;
   outline: none;
+  box-shadow: none;
   background: transparent;
-  font-size: 16px;
-  color: #ffffff; 
+  font-size: 1rem;
+  color: #fff;
   width: 100%;
-  padding: 0; /* Let the container handle padding */
+  padding: 0;
 }
 .search-input::placeholder {
-  color: #cbcbcb; 
+  color: #D1D5DB;
   opacity: 1;
 }
 .access-buttons {
-  background-color: #475569;
-  max-height: 90%;
-  overflow: hidden;
   font-size: 1rem;
   cursor: pointer;
-  margin-left: auto;
+  margin-inline-start: auto;
+  gap: 0.75rem;
   align-items: center;
   display: flex;
   justify-content: center;
-  color: white;
-  transition: all 0.3s ease;
+  color: #fff;
   position: relative;
 }
-.access-buttons:hover {
-  border-color: #ffffff;
-  background-color: #404b5c;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-}
-.access-buttons:active {
-  transform: translateY(0) scale(0.96); /* Feels like a real button press */
-  background-color: #222222;
-}
-.access-buttons:focus-visible {
-  box-shadow: 0 0 0 4px #475569;
-}
 .balance {
-  font-size: 1rem;
-  padding: 0.3rem 1rem;
-  border: 0.15rem solid #888888;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: end;
+  line-height: 1.2;
+  margin: 0;
+  padding: 0.3rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
 }
-.cart{
+.balance-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #D1D5DB;
+}
+.balance-value {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cart {
   width: 45%;
   min-width: 30px;
   position: relative;
   height: 90%;
   object-fit: cover;
-  padding: 0px 20px;
+  padding: 8px 20px;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
 }
+.cart:hover { background: rgba(255, 255, 255, 0.12); }
 .login-btn {
-  display: inline-flex;    /* use inline-flex so it doesn't take 100% width */
-  align-items: center;     /* vertical alignment */
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  color: #ffffff;
+  gap: 6px;
+  min-height: 40px;
+  color: #fff;
   font-weight: 600;
+  text-decoration: none;
   padding: 0.5rem 1rem;
-  border: 0.15rem solid #888888;
-  outline: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
 }
-.logo-btn:hover {
-  opacity: 0.85;
+.login-btn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.profile-btn {
+  display: block;
+  padding: 0;
+  margin-block: 0;
+  margin-inline: 1rem 1.25rem;
+  border: none;
+  background: none;
+  border-radius: 50%;
 }
-.profile-image{
-  position: relative; /* VERY IMPORTANT */
-  display: inline-block;
+.profile-image {
+  display: block;
   width: 2.5rem;
   height: 2.5rem;
-  background-color:rgb(0, 0, 0);
+  padding: 0.35rem;
+  background-color: var(--color-border);
+  border: 2px solid rgba(255, 255, 255, 0.6);
   border-radius: 50%;
-  margin: 0 3rem;
+  object-fit: cover;
+  transition: border-color var(--transition);
 }
+.profile-btn:hover .profile-image { border-color: #fff; }
+.navbar :focus-visible { box-shadow: 0 0 0 3px #fff; }
 
 .side-menu {
   position: fixed;
-  top: 60px; /* SAME as navbar height */
+  top: 60px;
   height: 50px;
-  margin: auto;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   justify-content: center;
-  align-content: center;
+  align-items: center;
   display: flex;
   padding: 0.2%;
-  border-radius: 0px;
   z-index: 100;
   width: 100%;
   overflow: hidden;
   flex-wrap: wrap;
 }
-
-.side-menu.is-open {
-  transform: translateX(0);
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
 }
-
-.icon{
-  width: 10rem;
-  margin: 0 0 0 1rem;
-}
-
+.login-btn .icon { margin-inline-start: 2px; }
+.side-menu { gap: 0.25rem; }
 .menu-item {
   width: fit-content;
-  padding: 10px 2vh 10px 2vh; /* Vertical spacing */
-  color: rgb(0, 0, 0);
-  font-size: 1.3rem;
-  justify-content: center;
+  min-height: 48px;
+  padding: 0 1rem;
+  gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 0px;
-  transition: all 0.2s ease;
-  
+  transition: background var(--transition), color var(--transition);
 }
-.selected{
-  border-bottom: rgb(0, 187, 255) 4px solid;
-  animation: none;
+.selected {
+  color: var(--color-primary);
+  border-bottom: 3px solid var(--color-primary);
 }
-/* Optional: Slight hover effect to feel interactive */
-.menu-item:hover {
-  background-color: #e4e4e4;
-  transform: translateY(-5);
+.menu-item:hover { background-color: var(--color-bg); color: var(--color-primary); }
+.selected { color: var(--color-primary); }
+@media (max-width: 640px) {
+  .menu-label { display: none; }
+  .menu-item { padding: 0 1.25rem; }
+  .balance-label { display: none; }
+  .profile-btn { margin: 0 0.5rem; }
+  .logo-btn { margin-inline-end: 2%; }
 }
 
 .dropdown {
   position: absolute;
   top: 100%;
-  margin-right: 3%;
-  right: 0;
-  border: 1px rgb(132, 130, 130) solid;
+  margin-inline-end: 3%;
+  inset-inline-end: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
   z-index: 110;
 }
-
 .dropdown-content {
-  background: #ffffff;
-  padding: 20px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 16px;
   width: 220px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 .email {
-  margin: 5px 0 15px;
-  font-size: 14px;
+  margin: 4px 0 12px;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
-
-.username{
-  margin: 0 15px 15px 0;
-}
+.username { margin: 0; font-size: 1rem; }
 hr {
   border: none;
-  border-top: 1px solid #888;
-  margin: 15px 0;
+  border-top: 1px solid var(--color-border);
+  margin: 12px 0;
 }
-
-/* Logout */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 4px;
+  color: var(--color-text);
+  font-size: 1rem;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition);
+}
+.dropdown-item:hover { background: var(--color-bg); color: var(--color-primary); }
 .logout {
   background: none;
   border: none;
-  font-size: 18px;
-  cursor: pointer;
-  align-content: center;
+  color: var(--color-text);
+  font-size: 1rem;
+  min-height: 40px;
+  align-items: center;
   display: flex;
   gap: 10px;
-  text-align: left;
+  text-align: start;
   width: 100%;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition);
 }
+.logout:hover { background: var(--color-error-soft); color: var(--color-error); }
 </style>

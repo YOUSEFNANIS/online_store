@@ -1,14 +1,15 @@
 <template>
     <div class="order-container">
       <div class="order-form">
-    <h2>قم بإدخال عنوانك</h2>
+    <h2>{{ $t('createOrder.title') }}</h2>
 
     <form @submit.prevent="confirm_order">
-        
-      <input type="text" placeholder="الموقع"  v-model="location" style="background-color: white;"/>
 
-      <button type="submit" class="submit-btn">
-        تأكيد الطلب
+      <label class="field-label" for="order-location">{{ $t('createOrder.location') }}</label>
+      <input id="order-location" type="text" :placeholder="$t('createOrder.location')" v-model="location"/>
+
+      <button type="submit" class="btn btn-cta submit-btn">
+        {{ $t('createOrder.confirm') }}
       </button>
     </form>
   </div>
@@ -29,20 +30,20 @@
         <div class="item-details">
         <!-- Quantity Controls -->
         <div class="qty-controls">
-          <button @click="decreaseQty(index)">-</button>
+          <button type="button" :aria-label="$t('createOrder.decrease')" @click="decreaseQty(index)">-</button>
           <span class="qty">{{ item.quantity }}</span>
-          <button @click="increaseQty(index)">+</button>
+          <button type="button" :aria-label="$t('createOrder.increase')" @click="increaseQty(index)">+</button>
         </div>
         <!-- Remove Item -->
-        <button class="remove-btn" @click="removeItem(index)">✕</button>
+        <button type="button" class="remove-btn" :aria-label="$t('createOrder.remove')" @click="removeItem(index)">✕</button>
       </div>
       </div>
       <div class="price-container">
       <div class="top-line"></div>
 
       <div class="price-row">
-        <span class="label">total price:</span>
-        <span class="value">{{ total_value }} LYD</span>
+        <span class="label">{{ $t('createOrder.totalPrice') }}</span>
+        <span class="value">{{ total_value }} {{ $t('createOrder.currency') }}</span>
       </div>
     </div>
   </div>
@@ -112,214 +113,173 @@ export default {
     },
 }
 </script>
-.body{
-  color: #aeaeae;
-}
 <style scoped>
-
 .order-container {
   display: flex;
-  font-weight: bold;
-  align-items: center;
-  max-width: 70%;
+  align-items: flex-start;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 6rem auto 2rem;
+  padding: 2rem 1rem;
   flex-direction: row;
-  margin: 8% auto 8% 5%; 
-  padding: 100px 20px;
-  animation: pageFade 0.6s ease;
-}
-
-@keyframes pageFade {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.full-name {
-  width: 370px;
-  gap: 10px;
-  display: flex; 
-  flex-direction: row; 
-}
-/* Main container for the form */
-.order-form { 
-  width: 30%;
-  max-width: 300px;
-  height: 30%;
-  display: flex;
-  flex-direction: column; 
-  padding: 30px 20px 20px 20px; 
-  
-  background: #003cff;
-  margin: auto;
-  direction: rtl; 
-  align-items: center; 
-  
-  /* REINSTATED: Original animation transition */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-/* Internal form wrapper */
-form { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 15px; 
-  width: 100%; 
-  align-items: center; 
-  
-}
-
-/* Title Styling */
-.order-form h2 {
-  font-size: 24px;
-  color: white;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-input {
-  padding: 12px;
-  font-size: 15px;
-  width: 85%;
-  transition: 0.3s;
-}
-
-input:focus {
-  outline: none;
-  border-color: #111;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
-}
-
-.submit-btn {
-  width: 65%; /* Adjusted for the look in your image */
-  padding: 14px;
-  border: none;
-  background: black;
-  color: white;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  
-  /* REINSTATED: Original button animations */
-  transition: 0.2s ease;
-}
-
-.submit-btn:hover {
-  background: #333;
-  transform: translateY(-2px);
-}
-
-.submit-btn:active {
-  transform: translateY(0px) scale(0.97);
-}
-/* RIGHT - SUMMARY */
-.cart-items{
-  width:20%;
-  max-width: 400px;
-  margin: auto;
-  display: flex;
-  gap: 20px;
-  flex-direction: column; /* Aligns the products horizontally */
   flex-wrap: wrap;
+  color: var(--color-text);
 }
-
-/* Cart item */
-.cart-item{
+.order-form {
+  flex: 1 1 280px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.order-form h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 1rem;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+.field-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+input {
+  width: 100%;
+  min-height: 40px;
+}
+.submit-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.cart-items {
+  flex: 2 1 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.cart-item {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* important */
-  gap: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 .left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 .item-details {
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.product-img {
+  width: 72px;
+  height: 72px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
+  overflow: hidden;
 }
-.product-img{
-  width:90px;
-  background:#cfcfcf;
-  display:flex;
-  margin-right: 10%;
-  justify-content:center;
+.product-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
-.product-img img{
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
-}
-/* Product info */
 .product-info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
-
-.product-name{
-  font-size:18px;
+.product-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
-
-.product-price{
-  font-size:14px;
-  color:#555;
+.product-price {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
-
-/* Quantity buttons */
-.qty-controls{
-  display:flex;
-  border:1px solid #333;
+.qty-controls {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  overflow: hidden;
 }
-
-.qty-controls button{
-  background:white;
-  border:none;
-  width:28px;
-  height:28px;
-  cursor:pointer;
+.qty-controls button {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: none;
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1.1rem;
+  transition: background var(--transition);
 }
-
-.qty{
-  width:30px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.qty-controls button:hover { background: var(--color-bg); }
+.qty {
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+.remove-btn {
+  min-width: 40px;
+  min-height: 40px;
+  background: var(--color-surface);
+  color: var(--color-error);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), border-color var(--transition);
+}
+.remove-btn:hover {
+  background: var(--color-error-soft);
+  border-color: var(--color-error);
 }
 .price-container {
-  width: 400px;
-  background: #ffffff;
-  padding: 20px;
-}
-
-.top-line {
   width: 100%;
-  height: 3px;
-  background: black;
-  margin-bottom: 15px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
 }
-
+.top-line { display: none; }
 .price-row {
   display: flex;
-  justify-content: center; /* Pushes items to opposite ends */   /* Recreates the line in your image */
-  padding-top: 10px;
-  font-size: 20px;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.125rem;
 }
-
 .label {
   text-transform: lowercase;
-  margin: auto 10%;
-  font-weight: bold;
+  color: var(--color-text-muted);
+  font-weight: 600;
 }
-
 .value {
-  font-weight: 500;
-  font-weight: bold;
-  margin: auto 10%;
+  font-weight: 700;
+  color: var(--color-text);
 }
-
+@media (max-width: 700px) {
+  .order-container { margin-top: 4rem; }
+  .order-form { max-width: none; }
+}
 </style>

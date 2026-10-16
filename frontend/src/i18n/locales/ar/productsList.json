@@ -1,0 +1,41 @@
+{
+  "filters": "التصفية",
+  "clearAll": "مسح الكل",
+  "priceGroup": "السعر (دينار)",
+  "min": "الأدنى",
+  "max": "الأقصى",
+  "minPrice": "السعر الأدنى",
+  "maxPrice": "السعر الأقصى",
+  "ok": "موافق",
+  "availability": "التوفر",
+  "inStockOnly": "المتوفر في المخزون فقط",
+  "productsCount": "منتج | منتجات",
+  "forQuery": "لـ “{query}”",
+  "sortBy": "ترتيب حسب:",
+  "sort": {
+    "newest": "الأحدث",
+    "priceAsc": "السعر: من الأقل إلى الأعلى",
+    "priceDesc": "السعر: من الأعلى إلى الأقل",
+    "nameAsc": "الاسم: أ–ي",
+    "nameDesc": "الاسم: ي–أ"
+  },
+  "view": "العرض",
+  "gridView": "عرض شبكي",
+  "listView": "عرض قائمة",
+  "currency": "دينار",
+  "emptyTitle": "لم يتم العثور على منتجات",
+  "emptyText": "جرّب بحثًا مختلفًا أو عد لاحقًا.",
+  "pagination": "ترقيم الصفحات",
+  "prevPage": "الصفحة السابقة",
+  "nextPage": "الصفحة التالية",
+  "chipRange": "{min} – {max} دينار",
+  "chipFrom": "من {min} دينار",
+  "chipUpTo": "حتى {max} دينار",
+  "chipInStock": "متوفر",
+  "ranges": {
+    "any": "أي سعر",
+    "under": "أقل من {n}",
+    "between": "{a} – {b}",
+    "over": "أكثر من {n}"
+  }
+}
