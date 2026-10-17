@@ -1,8 +1,7 @@
 import re
 from rest_framework import serializers
 
-def validate_password(self, password):
-  
+def validate_password(password):
         if len(password) < 8:
             raise serializers.ValidationError('password is too short')
         if not re.search(r"[A-Z]", password):

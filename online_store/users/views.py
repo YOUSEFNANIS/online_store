@@ -1,16 +1,20 @@
 
-from .models import seller, customer
-from .serializer import CustomerSerializer, SellerSerializer
-from online_store.permissions import IsOwnerOrAdmin
+from . import emails
+from .models import seller, customer, User
+from django.contrib.auth.tokens import default_token_generator
+from online_store.validator import validate_password
+from .serializer import CustomerSerializer, SellerSerializer, SellerListSerializer
+from online_store.permissions import IsOwnerOrAdmin, IsCustomer
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.viewsets import ModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
+from django.db.models import Avg, Count
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -129,6 +133,7 @@ class getUserView(ViewSet):
             "id": id,
             "first_name": request.user.first_name,
             "date_joined": request.user.date_joined,
+            "email_verified": request.user.email_verified,
             "last_name": request.user.last_name,
             "email": request.user.email,
             "phone_number": getattr(user_object, 'phone_number', None),
@@ -143,6 +148,7 @@ class getUserView(ViewSet):
                 "id": id,
                 "first_name": request.user.first_name,
                 "date_joined": request.user.date_joined,
+                "email_verified": request.user.email_verified,
                 "last_name": request.user.last_name,
                 "email": request.user.email,
                 "balance": getattr(user_object, 'balance', None),
@@ -159,3 +165,56 @@ class SellerViewset(ModelViewSet):
     permission_classes = [IsOwnerOrAdmin]
     queryset = seller.objects.all()
     serializer_class = SellerSerializer
+
+class SellerListViewset(ReadOnlyModelViewSet):
+    # Customer-facing directory; public fields only (no email/phone/balance).
+    permission_classes = [IsAuthenticated, IsCustomer]
+    queryset = seller.objects.select_related('user').annotate(product_count=Count('product', distinct=True), rating_avg=Avg('product__reviews__rating'), rating_count=Count('product__reviews', distinct=True)).order_by('store_name')
+    serializer_class = SellerListSerializer
+
+
+class _AuthEmailView(APIView):
+    permission_classes = []
+    authentication_classes = []
+    throttle_scope = 'auth_email'
+    pagination_class = None
+
+
+class VerifyEmailView(_AuthEmailView):
+    def post(self, request):
+        user = emails.user_from_uid(request.data.get('uid', ''))
+        if user is None or not emails.email_verification_token.check_token(user, request.data.get('token', '')):
+            return Response({'detail': 'This verification link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        user.email_verified = True
+        user.save(update_fields=['email_verified'])
+        return Response({'detail': 'Email verified.'})
+
+
+class ResendVerificationView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_scope = 'auth_email'
+
+    def post(self, request):
+        emails.send_verification_email(request.user)
+        return Response({'detail': 'Verification email sent.'})
+
+
+class PasswordResetRequestView(_AuthEmailView):
+    def post(self, request):
+        email = (request.data.get('email') or '').strip()
+        if email:
+            for user in User.objects.filter(email__iexact=email, is_active=True):
+                emails.send_password_reset_email(user)
+        # Same answer whether or not the address exists, so this cannot be used to probe accounts.
+        return Response({'detail': 'If that email has an account, a reset link is on its way.'})
+
+
+class PasswordResetConfirmView(_AuthEmailView):
+    def post(self, request):
+        user = emails.user_from_uid(request.data.get('uid', ''))
+        if user is None or not default_token_generator.check_token(user, request.data.get('token', '')):
+            return Response({'detail': 'This reset link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        password = validate_password(request.data.get('password') or '')
+        user.set_password(password)
+        user.save(update_fields=['password'])
+        return Response({'detail': 'Password changed.'})

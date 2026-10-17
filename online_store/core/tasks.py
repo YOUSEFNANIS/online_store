@@ -22,3 +22,9 @@ def send_order_message(order_number, user_email):
                 fail_silently=False,
             )
     return Response({"message": "Receipt sent successfully!"}, status=status.HTTP_200_OK)
+
+
+@celery.task
+def weekly_payouts():
+    from . import ledger
+    return len(ledger.run_weekly_payouts())

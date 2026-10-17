@@ -20,10 +20,10 @@ INSTALLED_APPS = [
     'users',
     'djoser',
     'chatbot',
+    'messaging',
     'rest_framework',
     'corsheaders',
     'django_filters',
-    "debug_toolbar",
 ]
 
 
@@ -33,13 +33,14 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'online_store.pagination.CustomPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
+    'DEFAULT_THROTTLE_RATES': {'auth_email': '10/hour'},
 }
 
 MIDDLEWARE = [
     #'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,13 +76,21 @@ TEMPLATES = [
     },
 ]
 
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
 WSGI_APPLICATION = 'online_store.wsgi.application'
 
 AUTH_USER_MODEL = 'users.User'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = 'nanisyousof@gmail.com'
+FRONTEND_URL = 'http://localhost:5173'
+
+# Money: amounts are in the store currency (no conversion). Commission is a share kept by the platform.
+from decimal import Decimal
+from celery.schedules import crontab
+COMMISSION_RATE = Decimal('0.05')
+PAYOUT_THRESHOLD = Decimal('100')
+CELERY_BEAT_SCHEDULE = {
+    'weekly-payouts': {'task': 'core.tasks.weekly_payouts', 'schedule': crontab(hour=3, minute=0, day_of_week='monday')},
+}
 
 
 AUTH_PASSWORD_VALIDATORS = [

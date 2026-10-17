@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    pass
+    email_verified = models.BooleanField(default=False)
 
 class seller(models.Model):
     store_name = models.CharField(max_length=20)

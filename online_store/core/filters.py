@@ -16,10 +16,12 @@ class ProductFilter(filters.FilterSet):
     min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
     max_price = filters.NumberFilter(field_name="price", lookup_expr='lte')
     in_stock = filters.BooleanFilter(method='filter_in_stock')
+    seller = filters.NumberFilter(field_name='seller_id')
+    category = filters.NumberFilter(field_name='category_id')
 
     def filter_in_stock(self, queryset, name, value):
         return queryset.filter(inventory__gt=0) if value else queryset
 
     class Meta:
         model = product
-        fields = ['min_price', 'max_price', 'in_stock']
+        fields = ['min_price', 'max_price', 'in_stock', 'seller', 'category']

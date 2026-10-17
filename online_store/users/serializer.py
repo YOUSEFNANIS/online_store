@@ -2,6 +2,16 @@ from django.db import transaction
 from rest_framework import serializers
 from .models import customer, seller, User
 from online_store.validator import validate_password
+from . import emails
+
+
+def _unique_username(first_name, last_name):
+    base = f"{first_name.lower()}_{last_name.lower()}"
+    username, n = base, 1
+    while User.objects.filter(username=username).exists():
+        n += 1
+        username = f"{base}{n}"
+    return username
 
 
 def _update_with_user(instance, validated_data):
@@ -44,7 +54,7 @@ class SellerSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         store_name = validated_data.pop('store_name')
 
-        username = f"{first_name.lower()}_{last_name.lower()}"
+        username = _unique_username(first_name, last_name)
 
         with transaction.atomic():
             # 3. Create the User
@@ -55,6 +65,7 @@ class SellerSerializer(serializers.ModelSerializer):
                 first_name=first_name,
                 last_name=last_name
             )
+            transaction.on_commit(lambda: emails.send_verification_email(user))
             return seller.objects.create(
                 user=user,
                 store_name=store_name,
@@ -65,11 +76,25 @@ class SellerSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         return _update_with_user(instance, validated_data)
 
-    def validate(self, attrs):
-        if hasattr(attrs, 'password'):
-            validate_password(attrs)
+    def validate_password(self, value):
+        return validate_password(value)
 
-        return super().validate(attrs)
+class SellerListSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    product_count = serializers.IntegerField(read_only=True)
+    rating_avg = serializers.SerializerMethodField()
+    rating_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = seller
+        fields = ['id', 'store_name', 'name', 'profile_image', 'product_count', 'rating_avg', 'rating_count']
+
+    def get_rating_avg(self, obj):
+        avg = getattr(obj, 'rating_avg', None)
+        return round(avg, 1) if avg is not None else None
+
+    def get_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}".strip()
 
 class CustomerSerializer(serializers.ModelSerializer):
     
@@ -91,7 +116,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
 
         # 2. Generate a unique username
-        username = f"{first_name.lower()}_{last_name.lower()}"
+        username = _unique_username(first_name, last_name)
 
         with transaction.atomic():
             # 3. Create the User
@@ -102,6 +127,7 @@ class CustomerSerializer(serializers.ModelSerializer):
                 first_name=first_name,
                 last_name=last_name
             )
+            transaction.on_commit(lambda: emails.send_verification_email(user))
             return customer.objects.create(
                 user=user,
                 phone_number=validated_data.get('phone_number', ''),
@@ -111,8 +137,5 @@ class CustomerSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         return _update_with_user(instance, validated_data)
 
-    def validate(self, attrs):
-        if hasattr(attrs, 'password'):
-            validate_password(attrs)
-
-        return super().validate(attrs)
+    def validate_password(self, value):
+        return validate_password(value)
