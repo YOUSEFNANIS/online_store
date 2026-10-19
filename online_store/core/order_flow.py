@@ -20,12 +20,25 @@ TRANSITIONS = {
 }
 
 
+def owner_of(user):
+    """Return (role, seller or customer id) for the user.
+
+    CookieJWTAuthentication annotates seller_pk / customer_pk on the user, so this costs no query.
+    Other authentication paths fall back to id-only lookups, cached on the user object.
+    """
+    if not hasattr(user, 'seller_pk'):
+        user.seller_pk = models.seller.objects.filter(user_id=user.id).values_list('id', flat=True).first()
+        user.customer_pk = None if user.seller_pk else (
+            models.customer.objects.filter(user_id=user.id).values_list('id', flat=True).first())
+    if user.seller_pk:
+        return 'seller', user.seller_pk
+    if user.customer_pk:
+        return 'customer', user.customer_pk
+    return None, None
+
+
 def role_of(user):
-    if hasattr(user, 'seller'):
-        return 'seller'
-    if hasattr(user, 'customer'):
-        return 'customer'
-    return None
+    return owner_of(user)[0]
 
 
 def allowed_transitions(role, status):

@@ -1,5 +1,7 @@
 from rest_framework import permissions
 
+from core.order_flow import owner_of
+
 class IsSeller(permissions.BasePermission):
 
     def has_permission(self, request, view):
@@ -16,15 +18,19 @@ class IsSeller(permissions.BasePermission):
     
 class IsCustomer(permissions.BasePermission):
     def has_permission(self, request, view):
-        return hasattr(request.user, 'customer')
+        # owner_of reads customer_pk from the auth query, so no profile query.
+        return request.user.is_authenticated and owner_of(request.user)[0] == 'customer'
 
 class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        return request.user == obj.customer.user or request.user == obj.seller.user
+        # Compare ids so the user rows are not loaded. customer is null after the customer is deleted.
+        customer_user_id = obj.customer.user_id if obj.customer_id else None
+        return request.user.id in (customer_user_id, obj.seller.user_id)
 
 class IsCartItemOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        return obj.cart.customer.user == request.user
+        # cart is select_related in the view, so this compares ids with no query.
+        return obj.cart.customer_id == owner_of(request.user)[1]
     
 class IsOwnerOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):

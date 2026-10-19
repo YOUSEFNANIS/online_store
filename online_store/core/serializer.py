@@ -1,6 +1,6 @@
 from . import models, order_flow
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Sum
 from rest_framework import serializers
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -37,9 +37,28 @@ class ProductSerialzer(serializers.ModelSerializer):
         validated_data['seller'] = seller
         return models.product.objects.create(**validated_data)
 
+class OrderListSerializer(serializers.ModelSerializer):
+    """Summary row for the orders page. Every value comes from the list queryset annotations."""
+    store_name = serializers.CharField(read_only=True)
+    customer_name = serializers.CharField(read_only=True)
+    total_quantity = serializers.IntegerField(read_only=True)
+    creation_date = serializers.DateTimeField(format="%Y %b %d, %H:%M", read_only=True)
+
+    class Meta:
+        model = models.order
+        fields = ['id', 'location', 'order_status', 'total_value', 'creation_date', 'total_quantity',
+                  'store_name', 'customer_name']
+
+    def get_fields(self):
+        fields = super().get_fields()
+        # A customer sees the store, a seller sees the customer; the other name is not annotated.
+        fields.pop('customer_name' if self.context.get('role') == 'customer' else 'store_name')
+        return fields
+
+
 class OrderSerializer(serializers.ModelSerializer):
-    customer_name = serializers.CharField(source='customer', read_only=True)
-    store_name = serializers.CharField(source='seller.store_name', read_only=True)
+    customer_name = serializers.SerializerMethodField(read_only=True)
+    store_name = serializers.SerializerMethodField(read_only=True)
     total_quantity = serializers.SerializerMethodField(read_only=True)
     creation_date = serializers.DateTimeField(format="%Y %b %d, %H:%M", read_only=True)
     allowed_transitions = serializers.SerializerMethodField(read_only=True)
@@ -52,14 +71,26 @@ class OrderSerializer(serializers.ModelSerializer):
         # Status changes go through order_flow.change_status, never a plain field write.
         read_only_fields = ['order_status', 'payment_method', 'payment_status']
 
+    # The viewset queryset annotates these values. A freshly created order has no annotations, so fall back.
+    def get_customer_name(self, obj):
+        if hasattr(obj, 'customer_name'):
+            return obj.customer_name
+        return str(obj.customer) if obj.customer_id else None
+
+    def get_store_name(self, obj):
+        if hasattr(obj, 'store_name'):
+            return obj.store_name
+        return obj.seller.store_name
+
     def get_total_quantity(self, obj):
-        # Returns the sum of all 'quantity' fields in the items
-        from django.db.models import Sum
-        result = obj.order_item_set.aggregate(total=Sum('quantity'))['total']
-        return result or 0
+        total = getattr(obj, 'total_quantity', None)
+        if total is None:
+            total = obj.order_item_set.aggregate(total=Sum('quantity'))['total']
+        return total or 0
 
     def get_allowed_transitions(self, obj):
-        role = order_flow.role_of(self.context['request'].user)
+        # The viewset passes the role in the context so it is not looked up again.
+        role = self.context.get('role') or order_flow.role_of(self.context['request'].user)
         return order_flow.allowed_transitions(role, obj.order_status)
 
     def get_status_history(self, obj):
@@ -82,6 +113,9 @@ class OrderSerializer(serializers.ModelSerializer):
                     .select_for_update().select_related('seller').filter(id__in=[i.product_id for i in cart_items])}
         for item in cart_items:
             product = products[item.product_id]
+            # Guards rows saved before the cart serializer rejected quantities below 1.
+            if item.quantity < 1:
+                raise serializers.ValidationError({'detail': f'Invalid quantity for {product.name}.'})
             if product.inventory < item.quantity:
                 raise serializers.ValidationError({'detail': f'Not enough stock for {product.name}.'})
 
@@ -110,10 +144,13 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_fields(self):
         fields = super().get_fields()
-        user = self.context['request'].user
+        role = self.context.get('role') or order_flow.role_of(self.context['request'].user)
 
-        if hasattr(user, 'customer'):
+        if role == 'customer':
             fields['total_value'].read_only = True
+        # Same rule as the list: a customer gets the store name, a seller gets the customer name.
+        if role:
+            fields.pop('customer_name' if role == 'customer' else 'store_name')
         return fields
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -122,15 +159,18 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['product', 'quantity']
 
 
+MAX_CART_ITEMS = 50
+
+
 class CartItemSerializer(serializers.ModelSerializer):
-    
+
     product_name = serializers.CharField(source='product.name', read_only=True)
     first_image = serializers.SerializerMethodField()
     price = serializers.DecimalField(source='product.price', max_digits=6, decimal_places=2, read_only=True)
     class Meta:
         model = models.cart_item
         fields = [
-            'id', 
+            'id',
             'cart',
             'product',
             'price',
@@ -138,23 +178,33 @@ class CartItemSerializer(serializers.ModelSerializer):
             'first_image',
             'quantity'
         ]
+        # The cart always comes from the logged-in customer, never from the request body.
+        read_only_fields = ['cart']
+        # Zero or negative quantities would give negative order totals and add stock back at checkout.
+        extra_kwargs = {'quantity': {'min_value': 1}}
 
     def get_first_image(self, obj):
-        image = obj.product.images.first()
+        # .all() reads the prefetched images; .first() would run a new query per item.
+        image = next(iter(obj.product.images.all()), None)
         if image:
             return image.image.url
         return None
 
+    @transaction.atomic
     def create(self, validated_data):
-        user = self.context['request'].user
-        customer = models.customer.objects.get(user = user)
-        cart = models.cart.objects.get(customer = customer)
+        customer_id = order_flow.owner_of(self.context['request'].user)[1]
+        # Lock the cart row so two parallel adds cannot both pass the limit check.
+        cart, _ = models.cart.objects.select_for_update().get_or_create(customer_id=customer_id)
         product = validated_data['product']
         cart_item = models.cart_item.objects.filter(cart=cart, product=product).first()
         if cart_item != None:
             cart_item.quantity +=1
             cart_item.save()
             return cart_item
+        if models.cart_item.objects.filter(cart=cart).count() >= MAX_CART_ITEMS:
+            raise serializers.ValidationError(
+                {'detail': f'Your cart can hold at most {MAX_CART_ITEMS} products.', 'code': 'cart_full'})
+        validated_data['cart'] = cart
         return models.cart_item.objects.create(**validated_data)
     
 class CartSerializer(serializers.ModelSerializer): 

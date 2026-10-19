@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from core.models import product
+from users.models import seller as seller_model
 from . import models, serializer
 
 DEFAULT_PAGE = 30
@@ -46,15 +47,22 @@ class ConversationViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if not hasattr(request.user, 'customer'):
             return Response({'detail': 'Only customers can contact sellers.'}, status=status.HTTP_403_FORBIDDEN)
 
-        product_obj = get_object_or_404(product.objects.select_related('seller'), id=request.data.get('product'))
+        # Either a product (inquiry card attached) or a bare seller (from the storefront).
+        if request.data.get('product'):
+            product_obj = get_object_or_404(product.objects.select_related('seller'), id=request.data.get('product'))
+            seller_obj = product_obj.seller
+            product_id = product_obj.id
+        else:
+            seller_obj = get_object_or_404(seller_model, id=request.data.get('seller'))
+            product_id = None
         msg = serializer.MessageSerializer(
-            data={'body': request.data.get('body', ''), 'product': product_obj.id},
+            data={'body': request.data.get('body', ''), 'product': product_id},
             context=self.get_serializer_context())
         msg.is_valid(raise_exception=True)
 
         with transaction.atomic():
             conversation, _ = models.Conversation.objects.get_or_create(
-                customer=request.user.customer, seller=product_obj.seller)
+                customer=request.user.customer, seller=seller_obj)
             msg.save(conversation=conversation, sender=request.user)
             conversation.last_message_at = timezone.now()
             conversation.save(update_fields=['last_message_at'])

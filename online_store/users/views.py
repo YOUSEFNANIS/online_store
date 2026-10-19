@@ -14,7 +14,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, FloatField, IntegerField, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -125,8 +126,9 @@ class getUserView(ViewSet):
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
         user = request.user
-        if hasattr(user, 'customer'):
-            user_object = customer.objects.get(user = request.user)
+        # customer_pk / seller_pk come from the auth query, so no hasattr() probe query.
+        if getattr(user, 'customer_pk', None) is not None:
+            user_object = customer.objects.get(pk=user.customer_pk)
             id = getattr(user_object, 'id', "Default Value")
             url = user_object.profile_image.url if user_object.profile_image else None
             return Response({
@@ -140,8 +142,8 @@ class getUserView(ViewSet):
             'profile_image': url,
             })
         
-        elif hasattr(user, 'seller'):
-            user_object = seller.objects.get(user = request.user)
+        elif getattr(user, 'seller_pk', None) is not None:
+            user_object = seller.objects.get(pk=user.seller_pk)
             id = getattr(user_object, 'id', "Default Value")
             url = user_object.profile_image.url if user_object.profile_image else None
             return Response({
@@ -169,8 +171,25 @@ class SellerViewset(ModelViewSet):
 class SellerListViewset(ReadOnlyModelViewSet):
     # Customer-facing directory; public fields only (no email/phone/balance).
     permission_classes = [IsAuthenticated, IsCustomer]
-    queryset = seller.objects.select_related('user').annotate(product_count=Count('product', distinct=True), rating_avg=Avg('product__reviews__rating'), rating_count=Count('product__reviews', distinct=True)).order_by('store_name')
     serializer_class = SellerListSerializer
+
+    def get_queryset(self):
+        from core.models import product, Review
+        # Correlated subqueries: no product x review join fan-out, no GROUP BY, and
+        # the pagination COUNT drops them since it does not use them.
+        seller_products = product.objects.filter(seller=OuterRef('pk')).order_by().values('seller').annotate(total=Count('pk')).values('total')
+        seller_reviews = Review.objects.filter(product__seller=OuterRef('pk')).order_by().values('product__seller')
+        return (
+            seller.objects
+            .select_related('user')
+            .only('id', 'store_name', 'profile_image', 'user__id', 'user__first_name', 'user__last_name')
+            .annotate(
+                product_count=Coalesce(Subquery(seller_products, output_field=IntegerField()), 0),
+                rating_count=Coalesce(Subquery(seller_reviews.annotate(total=Count('pk')).values('total'), output_field=IntegerField()), 0),
+                rating_avg=Subquery(seller_reviews.annotate(average=Avg('rating')).values('average'), output_field=FloatField()),
+            )
+            .order_by('store_name')
+        )
 
 
 class _AuthEmailView(APIView):

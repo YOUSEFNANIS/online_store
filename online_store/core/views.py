@@ -3,7 +3,8 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, F, IntegerField, OuterRef, Prefetch, Subquery, Sum, Value, prefetch_related_objects
+from django.db.models.functions import Coalesce, Concat
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework import filters, status
@@ -16,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from online_store import permissions
 from django.core.mail import send_mail
-from online_store.pagination import CustomPagination
+from online_store.pagination import CustomPagination, PrecountedPaginator
 from django.core.cache import cache
 from asgiref.sync import sync_to_async
 from .tasks import send_mail, send_order_message
@@ -39,8 +40,11 @@ class SendOrderReceiptView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 def product_queryset():
+    stats = (models.Review.objects.filter(product=OuterRef('pk')).order_by()
+             .values('product').annotate(avg=Avg('rating'), n=Count('id')))
     return (models.product.objects.prefetch_related('images').select_related('seller')
-            .annotate(rating_avg=Avg('reviews__rating'), rating_count=Count('reviews')))
+            .annotate(rating_avg=Subquery(stats.values('avg')),
+                      rating_count=Coalesce(Subquery(stats.values('n')), 0)))
 
 
 class ProductViewSet(ModelViewSet):
@@ -89,16 +93,49 @@ class OrderViewset(ModelViewSet):
     filterset_class = customFilters.OrderFilter
     permission_classes = [IsAuthenticated, permissions.IsOwner]
     pagination_class = CustomPagination
+
+    def get_serializer_class(self):
+        # The list page shows a summary row only; history, payment and transitions come from the detail call.
+        if self.action == 'list':
+            return serializer.OrderListSerializer
+        return serializer.OrderSerializer
+
+    def get_owner(self):
+        # Role and owner id. Read from the authenticated user, so no extra query.
+        return order_flow.owner_of(self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['role'] = self.get_owner()[0]
+        return context
+
     def get_queryset(self):
-        user = self.request.user
-        qs = models.order.objects.select_related('seller', 'customer__user').prefetch_related('events')
-        if hasattr(user, 'seller'):
-            return qs.filter(seller=user.seller).order_by("-creation_date", "-id")
+        role, owner_id = self.get_owner()
+        if role is None:
+            return models.order.objects.none()
 
-        if hasattr(user, 'customer'):
-            return qs.filter(customer=user.customer).order_by("-creation_date", "-id")
+        quantity = (models.order_item.objects.filter(order=OuterRef('pk')).order_by()
+                    .values('order').annotate(n=Sum('quantity')).values('n'))
+        qs = (models.order.objects.filter(**{f'{role}_id': owner_id})
+              .annotate(total_quantity=Coalesce(Subquery(quantity), 0, output_field=IntegerField()))
+              .order_by('-creation_date', '-id'))
 
-        return models.order.objects.none()
+        # A customer sees the store name, a seller sees the customer name.
+        if role == 'customer':
+            qs = qs.annotate(store_name=F('seller__store_name'))
+        else:
+            qs = qs.annotate(customer_name=Concat('customer__user__first_name', Value(' '),
+                                                  'customer__user__last_name'))
+
+        summary = ['id', 'location', 'order_status', 'total_value', 'creation_date']
+        if self.action == 'list':
+            return qs.only(*summary)
+
+        # Detail: IsOwner needs the owner user ids, the serializer needs payment fields and the history.
+        return (qs.select_related('seller', 'customer')
+                .only(*summary, 'payment_method', 'payment_status',
+                      'seller__user_id', 'customer__user_id')
+                .prefetch_related('events'))
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):
@@ -115,8 +152,10 @@ class OrderViewset(ModelViewSet):
         new_status = request.data.get('order_status')
         if new_status and new_status != instance.order_status:
             order_flow.change_status(instance.pk, new_status, request.user)
+            # Status, payment and history changed, so reload them.
+            instance = self.get_object()
 
-        return Response(self.get_serializer(self.get_object()).data, status=status.HTTP_200_OK)
+        return Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)
 
 class ImageViewSet(ModelViewSet):
     serializer_class = serializer.ImageSerializer
@@ -136,20 +175,34 @@ class CartViewSet(ModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        user = self.request.user
-        customer = models.customer.objects.get(user=user)
-        models.cart.objects.get_or_create(customer=customer)
-        return models.cart.objects.filter(customer=customer)
-    
+        # IsCustomer already ran owner_of, so customer_pk is set and no customer query runs.
+        return models.cart.objects.filter(customer_id=order_flow.owner_of(self.request.user)[1])
+
+    def list(self, request, *args, **kwargs):
+        # One cart per customer: get_or_create already returns it, so serialize it
+        # directly instead of fetching the same row again through get_queryset.
+        cart, _ = models.cart.objects.get_or_create(customer_id=order_flow.owner_of(request.user)[1])
+        prefetch_related_objects([cart], Prefetch('cart_item_set', queryset=cart_items_queryset()))
+        return Response(self.get_serializer([cart], many=True).data)
+
+
+def cart_items_queryset():
+    # product and its images load in bulk, so each item costs no extra query.
+    # only(): CartItemSerializer reads product name/price; cart is joined just for IsCartItemOwner.
+    return (models.cart_item.objects.select_related('product', 'cart')
+            .only('id', 'quantity', 'product', 'cart', 'cart__id', 'cart__customer_id', 'product__id', 'product__name', 'product__price')
+            .order_by('pk')
+            .prefetch_related(Prefetch('product__images', queryset=models.productImage.objects.order_by('pk'))))
+
+
 class CartItem(ModelViewSet):
     serializer_class = serializer.CartItemSerializer
     permission_classes = [permissions.IsCartItemOwner, permissions.IsCustomer]
-    
+    # No pagination: CartItemSerializer caps a cart at MAX_CART_ITEMS rows, so the full list stays small.
+    pagination_class = None
+
     def get_queryset(self):
-        user = self.request.user
-        customer = models.customer.objects.get(user = user)
-        cart = models.cart.objects.get(customer=customer)
-        return models.cart_item.objects.filter(cart=cart)
+        return cart_items_queryset().filter(cart__customer_id=order_flow.owner_of(self.request.user)[1])
 
 class OrderItem(ModelViewSet):
     serializer_class = serializer.OrderItemSerializer
@@ -223,9 +276,14 @@ class WishlistViewSet(GenericViewSet):
 
     def get_queryset(self):
         return (product_queryset().filter(wishlisted_by__customer=self.request.user.customer)
+                .only('name', 'description', 'price', 'inventory', 'category', 'seller', 'seller__store_name')
                 .order_by('-wishlisted_by__created', '-id'))
 
     def list(self, request):
+        # count wishlist rows directly: skips the product join and annotations
+        paginator = type('WishlistPaginator', (PrecountedPaginator,),
+                         {'count_source': models.WishlistItem.objects.filter(customer=request.user.customer)})
+        self.paginator.django_paginator_class = paginator
         page = self.paginate_queryset(self.get_queryset())
         return self.get_paginated_response(self.get_serializer(page, many=True).data)
 
