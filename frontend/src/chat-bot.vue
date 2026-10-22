@@ -65,7 +65,7 @@ export default {
             })
             
             try{
-              const url = 'http://127.0.0.1:8000/chat/chat/' + this.chat_id + '/message/'
+              const url = '/chat/chat/' + this.chat_id + '/message/'
               
               const response = await api.post(url, {message: this.newMessage, language: this.$i18n.locale}, {withCredentials: true})
               const getResponse = await api.get(url + response.data.chat_id + '/')         

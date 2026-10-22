@@ -4,5 +4,11 @@
   "currency": "LYD",
   "description": "Product description",
   "orderNow": "Order now",
-  "addToCart": "Add to cart"
+  "addToCart": "Add to cart",
+  "added": "Added",
+  "addedToCart": "Item added to your cart",
+  "addFailed": "Could not add item to cart",
+  "cartFull": "Your cart is full (50 products max)",
+  "back": "Back to products",
+  "noImage": "No image available"
 }

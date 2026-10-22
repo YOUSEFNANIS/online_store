@@ -1,0 +1,10 @@
+{
+  "title": "My wishlist",
+  "nav": "Wishlist",
+  "add": "Save to wishlist",
+  "remove": "Remove from wishlist",
+  "empty": "Your wishlist is empty. Tap the heart on any product to save it here.",
+  "browse": "Browse products",
+  "loading": "Loading…",
+  "failed": "Could not load your wishlist."
+}

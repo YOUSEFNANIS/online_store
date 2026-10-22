@@ -14,6 +14,7 @@
       </transition>
       <router-view class="page-content"  @saved="showBanner"></router-view>
       
+      <verify-banner v-if="showNavBar"></verify-banner>
       <chat-bot></chat-bot>
     </div>
 </template>
@@ -21,6 +22,7 @@
 <script>
 import chatBot from './chat-bot.vue'
 import NavBar from './components/helperComponents/nav-bar.vue';
+import VerifyBanner from './components/users/verify-banner.vue';
 import ShowCart from './show-cart.vue';
 import { useRoleStore } from '@/stores/role'
 
@@ -28,6 +30,7 @@ export default {
   components: {
     chatBot,
     NavBar,
+    VerifyBanner,
     ShowCart
   },
   data(){

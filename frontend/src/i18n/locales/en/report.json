@@ -1,0 +1,17 @@
+{
+  "button": "Report",
+  "title": "Report",
+  "reason": "Reason",
+  "details": "Details (optional)",
+  "send": "Send report",
+  "close": "Close",
+  "thanks": "Thank you. We will review your report.",
+  "failed": "Could not send the report.",
+  "reasons": {
+    "spam": "Spam",
+    "fraud": "Fraud or scam",
+    "inappropriate": "Inappropriate content",
+    "counterfeit": "Counterfeit item",
+    "other": "Other"
+  }
+}

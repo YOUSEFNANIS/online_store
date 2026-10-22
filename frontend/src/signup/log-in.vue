@@ -67,6 +67,8 @@
             <p v-else-if="capsLock" class="field-hint">{{ $t('login.capsLock') }}</p>
         </div>
 
+        <p class="forgot"><router-link :to="'/forgot-password'" class="link">{{ $t('accountEmail.forgotLink') }}</router-link></p>
+
         <div class="button-row">
             <button type="submit" class="btn btn-primary submit-btn" :disabled="loading">
                 <span v-if="loading" class="spinner" aria-hidden="true"></span>
@@ -177,6 +179,7 @@ export default {
 </script>
 
 <style scoped>
+.forgot { margin: -8px 0 16px; font-size: 0.875rem; text-align: end; }
 .signup-container {
   min-height: 100vh;
   width: 100%;

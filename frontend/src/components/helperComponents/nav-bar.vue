@@ -5,7 +5,7 @@
       <!-- Logo Button -->
       <router-link :to="'/'" class="logo-btn" >
         <img 
-          src="@/assets/ysfstore.webp" 
+          src="@/assets/logo.svg" 
           :alt="$t('nav.logoAlt')" 
           class="logo-img"
         />
@@ -78,12 +78,41 @@
         <List class="icon" aria-hidden="true"/>
         <span class="menu-label">{{ $t('nav.products') }}</span>
       </router-link>
+      <router-link v-if="role==='seller'" :to="'/inventory'" :title="$t('sellerTools.inventoryTitle')"
+      :class="tab === '/inventory' ? 'menu-item selected' : 'menu-item'">
+        <Boxes class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('sellerTools.inventoryNav') }}</span>
+      </router-link>
+      <router-link v-if="role==='seller'" :to="'/earnings'" :title="$t('earnings.title')"
+      :class="tab === '/earnings' ? 'menu-item selected' : 'menu-item'">
+        <Wallet class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('earnings.nav') }}</span>
+      </router-link>
+      <router-link v-if="role==='customer'" :to="'/wishlist'" :title="$t('wishlist.title')"
+      :class="tab === '/wishlist' ? 'menu-item selected' : 'menu-item'">
+        <Heart class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('wishlist.nav') }}</span>
+      </router-link>
+      <router-link v-if="role==='customer'" :to="'/sellers'" :title="$t('nav.sellersList')"
+      :class="tab === '/sellers' ? 'menu-item selected' : 'menu-item'">
+        <Store class="icon" aria-hidden="true"/>
+        <span class="menu-label">{{ $t('nav.sellers') }}</span>
+      </router-link>
       <router-link :to="'/orderslist'"  :title="$t('nav.ordersList')" 
       :class="tab === '/orderslist' ? 'menu-item selected' : 'menu-item'">
         <Package2 class="icon" aria-hidden="true"/>
         <span class="menu-label">{{ $t('nav.orders') }}</span>
       </router-link>
       
+      <router-link v-if="role" :to="'/messages'" :title="$t('messages.title')"
+      :class="tab === '/messages' ? 'menu-item selected' : 'menu-item'">
+        <span class="msg-icon-wrap">
+          <MessageSquare class="icon" aria-hidden="true"/>
+          <span v-if="unreadMessages" class="msg-badge">{{ unreadMessages > 99 ? '99+' : unreadMessages }}</span>
+        </span>
+        <span class="menu-label">{{ $t('messages.navLabel') }}</span>
+      </router-link>
+
       <router-link :to="'/settings'"  :title="$t('nav.settings')" 
       :class="tab === '/settings' ? 'menu-item selected' : 'menu-item'">
         <Settings class="icon" aria-hidden="true"/>
@@ -98,23 +127,32 @@
 
 <script>
 import { useRoleStore } from '@/stores/role'
-import api from '@/services/api';
-import { ShoppingCart, Search, LogOut ,Settings, Package2, LogIn, CirclePlus, List, User, FileText } from '@lucide/vue';
+import { useWishlistStore } from '@/stores/wishlist'
+import api, { API_URL } from '@/services/api';
+import { ShoppingCart, Search, LogOut ,Settings, Package2, LogIn, CirclePlus, List, User, FileText, MessageSquare, Store, Heart, Wallet, Boxes } from '@lucide/vue';
 import LangSwitcher from './lang-switcher.vue';
 import userIcon from '@/assets/user.svg';
 
 export default {
   name: "Navbar",
-  components: {LangSwitcher, ShoppingCart, Search, LogOut, Settings, Package2,CirclePlus , LogIn, List, User, FileText},
+  components: {LangSwitcher, ShoppingCart, Search, LogOut, Settings, Package2,CirclePlus , LogIn, List, User, FileText, MessageSquare, Store, Heart, Wallet, Boxes},
   beforeUnmount() {
     document.removeEventListener('click', this.handleCartOutsideClick);
     document.removeEventListener('click', this.handleMenuOutsideClick);
+    window.removeEventListener('messages-read', this.fetchUnread);
+    clearInterval(this.unreadTimer);
   },
   mounted() {
     document.addEventListener('click', this.handleCartOutsideClick);
     document.addEventListener('click', this.handleMenuOutsideClick);
+    window.addEventListener('messages-read', this.fetchUnread);
+    this.fetchUnread();
+    this.unreadTimer = setInterval(this.fetchUnread, 60000);
     this.retrieveData()
     console.log(this.user_data)
+  },
+  watch: {
+    role() { this.fetchUnread() },
   },
   computed: {
     roleStore() {
@@ -139,6 +177,8 @@ export default {
   data(){
     return {
       user_data: {},
+      unreadMessages: 0,
+      unreadTimer: null,
       isOpen: false,
       showCart: false,
       isCustomer: false,
@@ -148,6 +188,15 @@ export default {
     }
   },
   methods: {
+    async fetchUnread() {
+      if (!this.role) { this.unreadMessages = 0; return }
+      try {
+        const res = await api.get('messaging/conversations/unread-count/', { skipGlobalError: true })
+        this.unreadMessages = res.data.unread
+      } catch (e) {
+        this.unreadMessages = 0
+      }
+    },
     handleCartOutsideClick(event) {
       if (this.showCart && this.$refs.cartContainer?.$el && !this.$refs.cartContainer.$el.contains(event.target)) {
     this.showCart = false;
@@ -165,8 +214,9 @@ export default {
       async LogOut(){
       try{
         this.$router.push('/login')
-        const response = await api.post('http://127.0.0.1:8000/signup/logout/')
+        const response = await api.post('/signup/logout/')
         this.roleStore.logout()
+        useWishlistStore().reset()
       }
       catch(error){
         console.log(error)
@@ -175,11 +225,11 @@ export default {
 
     async retrieveData(){
       try {
-        const url = 'http://127.0.0.1:8000/signup/get_id/me/'
+        const url = '/signup/get_id/me/'
         const response = await api.get(url)
         this.user_data['username'] = response.data['first_name'] + ' ' + response.data['last_name']
         if (response.data['profile_image']!==null){
-          this.user_data['profile_image'] = 'http://127.0.0.1:8000'+ response.data['profile_image']
+          this.user_data['profile_image'] = API_URL + response.data['profile_image']
         }
         
         this.user_data['balance'] = response.data['balance']
@@ -225,7 +275,7 @@ export default {
 }
 .logo-btn:hover { opacity: 0.85; }
 .logo-img {
-  height: 2.75rem;
+  height: 2.5rem;
   width: auto;
 }
 .search-container {
@@ -389,6 +439,12 @@ export default {
 .selected {
   color: var(--color-primary);
   border-bottom: 3px solid var(--color-primary);
+}
+.msg-icon-wrap { position: relative; display: inline-flex; }
+.msg-badge {
+  position: absolute; top: -6px; inset-inline-end: -8px; min-width: 16px; padding: 0 4px;
+  font-size: 0.65rem; font-weight: 700; line-height: 16px; text-align: center;
+  color: #fff; background: var(--color-error); border-radius: 999px;
 }
 .menu-item:hover { background-color: var(--color-bg); color: var(--color-primary); }
 .selected { color: var(--color-primary); }

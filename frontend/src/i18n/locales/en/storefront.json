@@ -1,0 +1,13 @@
+{
+  "back": "All sellers",
+  "products": "Products",
+  "productsCount": "{count} products",
+  "loading": "Loading…",
+  "failed": "Could not load this store.",
+  "empty": "This store has no products yet.",
+  "currency": "LYD",
+  "prev": "Previous",
+  "next": "Next",
+  "pageOf": "Page {page} of {total}",
+  "outOfStock": "Out of stock"
+}

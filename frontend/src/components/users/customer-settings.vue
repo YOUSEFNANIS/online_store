@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import api from '@/services/api';
+import api, { API_URL } from '@/services/api';
 import { useRoleStore } from '@/stores/role';
 
 export default {
@@ -74,14 +74,14 @@ export default {
       }
     },
     async retreivedata(){
-      const url = 'http://127.0.0.1:8000/signup/get_id/me'
+      const url = '/signup/get_id/me'
       const response = await api.get(url)
       const data = response.data
       this.userData = {
         first_name: data.first_name || '',
         last_name: data.last_name || '',
         phone_number: data.phone_number || '',
-        profile_image: data.profile_image ? 'http://127.0.0.1:8000' + data.profile_image : null,
+        profile_image: data.profile_image ? API_URL + data.profile_image : null,
       }
       this.original = { ...this.userData }
       this.user_id = data.id
@@ -99,7 +99,7 @@ export default {
 
       try{
         const role = useRoleStore().role === 'seller' ? 'seller' : 'customer'
-        const url = 'http://127.0.0.1:8000/signup/' + role + '/' + this.user_id + '/'
+        const url = '/signup/' + role + '/' + this.user_id + '/'
 
         const response = await api.patch(url, formData)
         this.$router.push('/')
@@ -124,7 +124,7 @@ export default {
 
       this.loading = true;
       try {
-        const response = await api.get('http://127.0.0.1:8000/core/products/', {
+        const response = await api.get('/core/products/', {
           params: {
             search: this.searchQuery
           }

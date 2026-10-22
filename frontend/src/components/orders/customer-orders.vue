@@ -1,103 +1,102 @@
 <template>
   <div>
     <load-component v-if="loading===true"/>
-  <div v-else>
-    <!-- <div class="header">
-      <h1>Orders</h1>
-      <button class="btn-black" @click="createNewOrder">Create order</button>
-    </div> -->
+    <div v-else>
+      <div class="orders-card">
+        <div v-if="!orderList.length" class="orders-empty">
+          <div class="orders-empty-icon" aria-hidden="true">📦</div>
+          {{ $t('customerOrders.empty') }}
+        </div>
+        <table v-else class="orders-table">
+          <thead>
+            <tr>
+              <th>{{ $t('customerOrders.store') }}</th>
+              <th>{{ $t('customerOrders.value') }}</th>
+              <th>{{ $t('customerOrders.date') }}</th>
+              <th>{{ $t('customerOrders.items') }}</th>
+              <th>{{ $t('customerOrders.location') }}</th>
+              <th>{{ $t('customerOrders.status') }}</th>
+              <th><span class="sr-only">{{ $t('customerOrders.edit') }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in orderList" :key="order.id">
+              <td class="col-name" :data-label="$t('customerOrders.store')">{{ order.store_name }}</td>
+              <td class="col-value" :data-label="$t('customerOrders.value')">{{ order.total_value }} {{ $t('customerOrders.currency') }}</td>
+              <td class="col-muted" :data-label="$t('customerOrders.date')">{{ order.creation_date }}</td>
+              <td :data-label="$t('customerOrders.items')">{{ order.total_quantity }}</td>
+              <td :data-label="$t('customerOrders.location')">{{ order.location }}</td>
+              <td :data-label="$t('customerOrders.status')">
+                <span :class="['status-badge', order.order_status]">{{ statusLabel(order.order_status) }}</span>
+              </td>
+              <td class="col-action">
+                <button
+                  v-if="order.order_status === 'shipped'"
+                  type="button"
+                  class="btn btn-primary deliver-btn"
+                  :disabled="busy"
+                  @click.stop="confirmDelivery(order)"
+                >{{ $t('orderFlow.actions.delivered') }}</button>
+                <button type="button" class="orders-icon-btn" @click.stop="updateOrderPane(order)" :title="$t('orderFlow.details')" :aria-label="$t('orderFlow.details')">
+                  <Eye :size="18" />
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <div class="card table-card">
-      <table class="order-table">
-        <thead>
-          <tr>
-            <th>{{ $t('customerOrders.store') }}</th>
-            <th>{{ $t('customerOrders.value') }}</th>
-            <th>{{ $t('customerOrders.date') }}</th>
-            <th>{{ $t('customerOrders.items') }}</th>
-            <th>{{ $t('customerOrders.location') }}</th>
-            <th>{{ $t('customerOrders.status') }}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="order in orders" :key="order.id">
-            <td class="bold">{{ order.store_name }}</td>
-            <td>{{ order.total_value }} {{ $t('customerOrders.currency') }}</td>
-            <td>{{ order.creation_date }}</td>
-            <td>{{ order.total_quantity }}</td>
-            <td>{{ order.location }}</td>
-            <td>
-              <span :class="['status-pill', order.order_status]">
-                {{ statusLabel(order.order_status) }}
-              </span>
-            </td>
-            <td class="actions">
-              <span class="icon-btn" role="button" tabindex="0" @click.stop="updateOrderPane(order)" @keydown.enter="updateOrderPane(order)" :title="$t('customerOrders.editStatus')" :aria-label="$t('customerOrders.editStatus')">
-                <Pencil :title="$t('customerOrders.edit')"/>
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-      <transition name="pop">
-      <div v-if="showOrderPane" class="order-card" ref="orderPane">
-        <div class="card-header">
-          <span class="order-id">{{ $t('customerOrders.orderNumber', { id: orderTemp.id }) }}</span>
-          
-          <div class="select-wrapper">
-            <select v-model="orderTemp.order_status" :class="['status-pill', orderTemp.order_status]">
-              <option class="pending" value="pending">{{ $t('customerOrders.statuses.pending') }}</option>
-              <option class="cancelled" value="cancelled">{{ $t('customerOrders.statuses.cancelled') }}</option>
-              <option class="completed" value="completed">{{ $t('customerOrders.statuses.completed') }}</option>
-            </select>
+      <transition name="orders-fade">
+        <div v-if="showOrderPane" class="orders-backdrop" @click.self="showOrderPane = false">
+          <div class="orders-modal" role="dialog" aria-modal="true">
+            <h2>{{ $t('customerOrders.orderNumber', { id: orderTemp.id }) }}</h2>
+            <order-timeline :history="orderTemp.status_history" />
+            <p class="pay-line">{{ $t('orderFlow.payment.' + orderTemp.payment_method) }} · {{ $t('orderFlow.payment.' + orderTemp.payment_status) }}</p>
+            <div class="orders-modal-actions">
+              <button
+                v-for="s in orderTemp.allowed_transitions"
+                :key="s"
+                type="button"
+                :class="['btn', s === 'cancelled' ? 'btn-outline' : 'btn-primary']"
+                :disabled="busy"
+                @click="changeStatus(s)"
+              >{{ $t('orderFlow.actions.' + s) }}</button>
+              <button type="button" class="btn btn-outline" @click="showOrderPane = false">{{ $t('orderFlow.close') }}</button>
+            </div>
           </div>
         </div>
+      </transition>
 
-        <hr class="divider" />
-
-        <div class="card-actions">
-          <button @click="updateOrderStatus" class="btn btn-primary">{{ $t('customerOrders.save') }}</button>
-          <button @click="showOrderPane = false" class="btn btn-outline">{{ $t('customerOrders.cancel') }}</button>
-        </div>
+      <div v-if="totalPages > 1" class="orders-pagination">
+        <button
+          v-for="i in totalPages"
+          :key="i"
+          :class="{ active: i === params.params.page }"
+          @click="setPageParam(i)"
+        >{{ i }}</button>
       </div>
-    </transition>
-  </div>
-  <div class="pagination">
-                <button
-                v-for="i in totalPages"
-                :key="i"
-                :class="['pagination-btn', { active: page === currentPage }]"
-                @click="setPageParam(i)"
-                >
-                {{ i }}
-                </button>
-            </div>
+    </div>
   </div>
 </template>
 
 <script>
 import api from '@/services/api';
-import { Pencil } from '@lucide/vue';
+import { Eye } from '@lucide/vue';
+import OrderTimeline from './order-timeline.vue';
 import LoadComponent from '../helperComponents/load-component.vue';
 
 export default {
-  components: {Pencil, LoadComponent },
-  beforeUnmount() {
-    document.removeEventListener('click', this.handleOrderPaneOutsideClick);
-  },
+  components: { Eye, LoadComponent, OrderTimeline },
     mounted(){
-        
-        document.addEventListener('click', this.handleOrderPaneOutsideClick);
         this.fetchOrders()
     },
 
     data(){
         return {
-            orders: {},
+            orders: [],
             showOrderPane: false,
             loading: false,
+            busy: false,
             orderTemp: {},
             params: {
                 params: {
@@ -106,47 +105,70 @@ export default {
             totalPages: 1
         }
     },
+    computed: {
+        orderList() {
+          return Object.values(this.orders)
+        }
+    },
     methods: {
         statusLabel(status) {
-          const key = 'customerOrders.statuses.' + status
+          const key = 'orderFlow.statuses.' + status
           return this.$te(key) ? this.$t(key) : status
         },
-        handleOrderPaneOutsideClick(event) {
-          if (this.showOrderPane && this.$refs.orderPane && !this.$refs.orderPane.contains(event.target)) {
-              this.showOrderPane = false;
-          }},
-          setPageParam(navPage){
+        setPageParam(navPage){
             this.params.params.page = navPage
             this.fetchOrders()
-            },
-        updateOrderPane(order){
-          this.showOrderPane=!this.showOrderPane
-          this.orderTemp = {...order}
+        },
+        async updateOrderPane(order){
+          // The list holds summary rows only; history, payment and transitions come from the detail call.
+          try {
+            const response = await api.get('/core/orders/' + order.id + '/')
+            this.orderTemp = response.data
+            this.showOrderPane = true
+          } catch (error) {
+            console.log(error.response)
+          }
         },
 
-        async updateOrderStatus (){
-          try{const url = 'http://127.0.0.1:8000/core/orders/' + this.orderTemp.id + '/'
-          const response = await api.patch(url, {'order_status': this.orderTemp.order_status})
-          this.showOrderPane = false}
-          catch(error){
+        async changeStatus(next) {
+          const updated = await this.patchStatus(this.orderTemp.id, next)
+          if (updated) this.orderTemp = updated
+        },
+
+        // Shipped orders get a button in the list row, so the customer does not have to open the details first.
+        async confirmDelivery(order) {
+          await this.patchStatus(order.id, 'delivered')
+        },
+
+        async patchStatus(orderId, next) {
+          const prompt = { cancelled: 'orderFlow.confirmCancel', delivered: 'orderFlow.confirmDelivery' }[next]
+          if (prompt && !window.confirm(this.$t(prompt))) return null
+          this.busy = true
+          try {
+            const response = await api.patch('/core/orders/' + orderId + '/', { order_status: next })
+            const i = this.orders.findIndex(o => o.id === response.data.id)
+            if (i >= 0) this.orders[i] = { ...this.orders[i], order_status: response.data.order_status }
+            return response.data
+          } catch (error) {
             console.log(error.response)
+            return null
+          } finally {
+            this.busy = false
           }
         },
 
         async fetchOrders () {
             this.loading = true
             try{
-                const response = await api.get('http://127.0.0.1:8000/core/orders/', this.params)
-            this.orders = {
-                ...this.orders,
-                ...response.data['results']
+                const response = await api.get('/core/orders/', this.params)
+                this.orders = response.data['results']
+                this.totalPages = response.data['total_pages']
             }
-            this.totalPages = response.data['total_pages']
-          
-        this.loading = false
-      }
             catch(error){
                 console.log(error)
+            }
+            finally {
+                this.loading = false
             }
         },
     }
@@ -154,100 +176,11 @@ export default {
 </script>
 
 <style scoped>
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-h1 { font-size: 1.5rem; font-weight: 600; color: var(--color-text); }
-.card { width: fit-content; max-width: 100%; overflow: hidden; }
-
-.table-card {
-  width: 100%;
-  overflow-x: auto;
+.field-label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); }
+.deliver-btn { margin-inline-end: 8px; white-space: nowrap; }
+.status-select { width: 100%; min-height: 44px; padding: 0 12px; cursor: pointer; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
 }
-.order-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: start;
-  color: var(--color-text);
-}
-.order-table th {
-  background: var(--color-bg);
-  padding: 0.75rem 1rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--color-text-muted);
-  border-bottom: 1px solid var(--color-border);
-}
-.order-table td {
-  padding: 0.875rem 1rem;
-  border-top: 1px solid var(--color-border);
-  font-size: 0.9rem;
-}
-.order-table tbody tr:first-child td { border-top: none; }
-.order-table tbody tr:hover { background: var(--color-bg); }
-.bold { font-weight: 600; }
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  min-height: 40px;
-  border-radius: var(--radius-sm);
-  color: var(--color-primary);
-  cursor: pointer;
-  transition: background var(--transition);
-}
-.icon-btn:hover { background: var(--color-primary-soft); }
-.status-pill {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: capitalize;
-}
-.completed { background: var(--color-success-soft); color: var(--color-text); }
-.pending { background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); }
-.cancelled { background: var(--color-error-soft); color: var(--color-text); }
-
-.order-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  position: fixed;
-  top: 30%;
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-  padding: 1.5rem;
-  width: min(420px, calc(100vw - 2rem));
-  z-index: 50;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-.order-id {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-select {
-  min-height: 40px;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-}
-select.status-pill { border-radius: var(--radius-sm); }
-.divider {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: 1rem 0;
-}
-.card-actions { display: flex; gap: 0.75rem; }
-.card-actions .btn { flex: 1; }
-.pop-enter-active, .pop-leave-active { transition: opacity 0.2s ease; }
-.pop-enter-from, .pop-leave-to { opacity: 0; }
 </style>

@@ -1,0 +1,9 @@
+{
+  "title": "Sellers",
+  "loading": "Loading sellers…",
+  "failed": "Could not load sellers.",
+  "empty": "No sellers yet.",
+  "prev": "Previous",
+  "next": "Next",
+  "pageOf": "Page {page} of {total}"
+}

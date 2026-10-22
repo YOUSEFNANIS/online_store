@@ -1,0 +1,25 @@
+{
+  "title": "Earnings",
+  "nav": "Earnings",
+  "currency": "LYD",
+  "rule": "Orders are paid in cash on delivery. Every Monday we pay out your balance if it is above {threshold}. The platform keeps {rate}% of each sale.",
+  "balance": "Current balance",
+  "nextPayout": "Next payout",
+  "willBePaid": "Your balance will be paid out",
+  "belowThreshold": "Balance must be above {threshold}",
+  "lastPayout": "Last payout",
+  "none": "None yet",
+  "history": "Transactions",
+  "empty": "No transactions yet. Earnings appear when a customer confirms delivery.",
+  "date": "Date",
+  "type": "Type",
+  "order": "Order",
+  "amount": "Amount",
+  "failed": "Could not load your earnings.",
+  "kinds": {
+    "sale": "Sale",
+    "commission": "Platform commission",
+    "payout": "Payout",
+    "adjustment": "Adjustment"
+  }
+}

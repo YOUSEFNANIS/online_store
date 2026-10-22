@@ -1,10 +1,12 @@
 import axios from 'axios'
 import i18n from '@/i18n'
 
+export const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+
 const t = (key) => i18n.global.t(key)
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/',
+  baseURL: API_URL + '/',
   withCredentials: true,
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
@@ -28,7 +30,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await api.post('http://127.0.0.1:8000/api/token/refresh/');
+        await api.post('/api/token/refresh/');
         return api(originalRequest);
       } catch (err) {
         return Promise.reject(err);

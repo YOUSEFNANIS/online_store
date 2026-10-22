@@ -6,7 +6,8 @@
     <form @submit.prevent="confirm_order">
 
       <label class="field-label" for="order-location">{{ $t('createOrder.location') }}</label>
-      <input id="order-location" type="text" :placeholder="$t('createOrder.location')" v-model="location"/>
+      <input id="order-location" type="text" :placeholder="$t('createOrder.location')" v-model="location" :aria-invalid="!!locationError" @input="locationError = false"/>
+      <p v-if="locationError" class="field-error" role="alert">{{ $t('createOrder.locationRequired') }}</p>
 
       <button type="submit" class="btn btn-cta submit-btn">
         {{ $t('createOrder.confirm') }}
@@ -53,7 +54,7 @@
 
 </template>
 <script>
-import api from '@/services/api';
+import api, { API_URL } from '@/services/api';
 
 export default {
     mounted(){
@@ -63,6 +64,7 @@ export default {
     data(){
         return {
             location: '',
+            locationError: false,
             data: {},
         }
     },
@@ -85,14 +87,14 @@ export default {
     },
       async retreive_items(){
         try{
-          const response = await api.get('http://127.0.0.1:8000/core/cart/')
+          const response = await api.get('/core/cart/')
         this.data = {
         ...this.data, // Keep the original structure
         ...response.data[0].cart_item_set     // Add and overwrite with everything from result
         };
       
       // this.cart_id = response.data[0].id
-      const baseUrl = "http://127.0.0.1:8000"
+      const baseUrl = API_URL
       for (const i in this.data){
 
       this.data[i].first_image = baseUrl + this.data[i].first_image
@@ -104,7 +106,11 @@ export default {
       },
 
       async confirm_order(){
-            try{const response = await api.post('http://127.0.0.1:8000/core/orders/', {'location': this.location, 'total_value': this.total_value})
+            if (!this.location.trim()) {
+              this.locationError = true
+              return
+            }
+            try{const response = await api.post('/core/orders/', {'location': this.location, 'total_value': this.total_value})
             this.$router.push({path:'/thankyou'})}
             catch(error){
               console.log(error.response)
@@ -157,6 +163,12 @@ input {
   width: 100%;
   min-height: 40px;
 }
+.field-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-error);
+}
+input[aria-invalid="true"] { border-color: var(--color-error); }
 .submit-btn {
   width: 100%;
   margin-top: 0.5rem;

@@ -1,0 +1,24 @@
+{
+  "statuses": {
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "actions": {
+    "confirmed": "Confirm order",
+    "shipped": "Mark as shipped",
+    "delivered": "Confirm delivery",
+    "cancelled": "Cancel order"
+  },
+  "details": "Order details",
+  "close": "Close",
+  "confirmCancel": "Cancel this order? This cannot be undone.",
+  "confirmDelivery": "Confirm you received this order and paid the courier? This cannot be undone.",
+  "payment": {
+    "cod": "Cash on delivery",
+    "unpaid": "Unpaid",
+    "paid": "Paid"
+  }
+}

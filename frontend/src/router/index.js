@@ -15,6 +15,15 @@ import EditProduct from '@/components/product/edit-product.vue'
 import OrderWrapper from '@/components/orders/order-wrapper.vue'
 import SellerDashboard from '@/components/users/seller-dashboard.vue'
 import LandingPage from '@/components/landing-page.vue'
+import SellersList from '@/components/product/sellers-list.vue'
+import SellerStorefront from '@/components/product/seller-storefront.vue'
+import ForgotPassword from '@/components/users/forgot-password.vue'
+import ResetPassword from '@/components/users/reset-password.vue'
+import VerifyEmail from '@/components/users/verify-email.vue'
+import WishlistPage from '@/components/product/wishlist-page.vue'
+import SellerEarnings from '@/components/users/seller-earnings.vue'
+import SellerInventory from '@/components/users/seller-inventory.vue'
+import MessagesPage from '@/components/messages/messages-page.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,8 +31,27 @@ const router = createRouter({
     {path: '/dashboard', component: SellerDashboard, meta: {
       requiresSeller: true,
     }},
+    {path: '/inventory', component: SellerInventory, meta: {
+      requiresSeller: true,
+    }},
+    {path: '/earnings', component: SellerEarnings, meta: {
+      requiresSeller: true,
+    }},
     {path: '/landingpage', component: LandingPage},
     {path: '/products', component: ProductsList},
+    {path: '/search', redirect: to => ({ path: '/products', query: to.query.q ? { searchQuery: to.query.q } : {} })},
+    {path: '/sellers', component: SellersList, meta: {
+      requiresCustomer: true,
+    }},
+    {path: '/sellers/:sellerId', component: SellerStorefront, meta: {
+      requiresCustomer: true,
+    }},
+    {path: '/wishlist', component: WishlistPage, meta: {
+      requiresCustomer: true,
+    }},
+    {path: '/forgot-password', component: ForgotPassword},
+    {path: '/reset-password', component: ResetPassword},
+    {path: '/verify-email', component: VerifyEmail},
     {path: '/signup', component: signupMainpage},
     {path: '/login', component: LogIn},
     {path: '/order', component: CreateOrder},
@@ -31,6 +59,7 @@ const router = createRouter({
     {path: '/terms', component: TermsOfUse},
     {path: '/orderslist', component: OrderWrapper},
     {path: '/settings', component: CustomerSettings},
+    {path: '/messages', component: MessagesPage},
     {path: '/products/create', component: CreateProduct, meta: { 
       requiresSeller: true,
     }},
@@ -53,6 +82,9 @@ router.beforeEach((to, from, next) => {
      else {
       return next('/dashboard')
     }
+  }
+  if (to.meta.requiresCustomer && userStore.role !== 'customer') {
+    return next(userStore.role === null ? '/login' : '/')
   }
   if (to.meta.requiresSeller) {
     

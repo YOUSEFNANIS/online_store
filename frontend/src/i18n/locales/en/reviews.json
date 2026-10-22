@@ -1,0 +1,15 @@
+{
+  "title": "Customer reviews",
+  "noRatings": "No ratings yet",
+  "basedOn": "Based on {count} reviews",
+  "writeTitle": "Rate this product",
+  "rating": "Rating",
+  "placeholder": "Share your experience (optional)",
+  "submit": "Submit review",
+  "afterDelivery": "You can review this product after your order has been delivered.",
+  "empty": "No reviews yet.",
+  "more": "Show more",
+  "delete": "Delete my review",
+  "confirmDelete": "Delete your review?",
+  "failed": "Could not save your review."
+}

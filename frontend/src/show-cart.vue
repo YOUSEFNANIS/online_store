@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import api from './services/api';
+import api, { API_URL } from './services/api';
 
 export default {
   name: "CartComponent",
@@ -58,10 +58,11 @@ export default {
       this.cartData[index].quantity +=1
     },
     decreaseQty(index) {
-      this.cartData[index].quantity -=1
+      // Server rejects quantities below 1; use remove to drop an item.
+      if (this.cartData[index].quantity > 1) this.cartData[index].quantity -=1
     },
     async removeItem(index) {
-      try {const url = 'http://127.0.0.1:8000/core/cart/' + this.cart_id + '/cartitem/' + this.cartData[index].id + '/' 
+      try {const url = '/core/cart/' + this.cart_id + '/cartitem/' + this.cartData[index].id + '/' 
       const response = await api.delete(url)
       delete this.cartData[index]
       }
@@ -76,14 +77,14 @@ export default {
     },
     async save() {
       for (const i in this.cartData){
-        const url = 'http://127.0.0.1:8000/core/cart/' + this.cart_id + '/cartitem/' + this.cartData[i].id + '/' 
+        const url = '/core/cart/' + this.cart_id + '/cartitem/' + this.cartData[i].id + '/' 
         const response = await api.patch(url, {'quantity': this.cartData[i].quantity})
         
       }
       this.$emit('close')
     },
     async retreiveItems(){
-      try{const response = await api.get('http://127.0.0.1:8000/core/cart/')
+      try{const response = await api.get('/core/cart/')
 
       const data = response.data[0].cart_item_set
       this.cart_id = response.data[0].id
@@ -91,7 +92,7 @@ export default {
   ...this.cartData, // Keep the original structure
   ...response.data[0].cart_item_set     // Add and overwrite with everything from result
 }   
-    const baseUrl = 'http://127.0.0.1:8000'
+    const baseUrl = API_URL
     for (const i in this.cartData){
 
       this.cartData[i].first_image = baseUrl + this.cartData[i].first_image

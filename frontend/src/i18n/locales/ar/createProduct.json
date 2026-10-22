@@ -16,5 +16,7 @@
   "price": "السعر",
   "currencySymbol": "$",
   "quantity": "الكمية",
-  "save": "حفظ المنتج"
+  "save": "حفظ المنتج",
+  "category": "الفئة",
+  "noCategory": "بدون فئة"
 }

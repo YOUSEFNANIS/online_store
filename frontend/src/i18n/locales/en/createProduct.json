@@ -16,5 +16,7 @@
   "price": "Price",
   "currencySymbol": "$",
   "quantity": "Quantity",
-  "save": "Save product"
+  "save": "Save product",
+  "category": "Category",
+  "noCategory": "No category"
 }

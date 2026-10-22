@@ -44,6 +44,22 @@
               </label>
             </div>
           </div>
+          <div v-if="catalog.categories.length" class="group">
+            <button type="button" class="group-title" @click="open.cat = !open.cat">
+              {{ $t('catalog.category') }}
+              <ChevronDown :size="16" :class="{ flip: open.cat }" />
+            </button>
+            <div v-show="open.cat" class="group-body">
+              <ul class="quick">
+                <li>
+                  <label><input v-model="filters.category" type="radio" name="cat" value="" @change="applyFilters" /> {{ $t('catalog.allCategories') }}</label>
+                </li>
+                <li v-for="c in catalog.categories" :key="c.id">
+                  <label><input v-model="filters.category" type="radio" name="cat" :value="c.id" @change="applyFilters" /> {{ catalog.nameOf(c, $i18n.locale) }}</label>
+                </li>
+              </ul>
+            </div>
+          </div>
         </aside>
 
         <div class="results">
@@ -100,12 +116,14 @@
             <div v-else class="thumb-placeholder" aria-hidden="true">
               <ImageOff :size="36" :stroke-width="1.5" />
             </div>
+            <wishlist-heart :product-id="product.id" class="heart-pos" />
           </div>
           <div class="product-info">
             <h2 class="product-name" :title="product.name">{{ product.name }}</h2>
             <p class="product-price">
               {{ formatPrice(product.price) }} <span class="currency">{{ $t('productsList.currency') }}</span>
             </p>
+            <star-rating v-if="product.rating_count" :value="product.rating_avg || 0" :count="product.rating_count" />
           </div>
         </router-link>
       </div>
@@ -153,12 +171,15 @@
 <script>
 import api from '@/services/api';
 import loadComponent from '../helperComponents/load-component.vue';
+import WishlistHeart from '../helperComponents/wishlist-heart.vue';
+import { useCatalogStore } from '@/stores/catalog';
+import StarRating from '@/components/helperComponents/star-rating.vue';
 import { ImageOff, PackageSearch, ChevronLeft, ChevronRight, X, SlidersHorizontal, ChevronDown, LayoutGrid, List } from '@lucide/vue';
 
-const defaultFilters = () => ({ ordering: '-id', min_price: '', max_price: '', in_stock: false });
+const defaultFilters = () => ({ ordering: '-id', min_price: '', max_price: '', in_stock: false, category: '' });
 
 export default {
-  components: { loadComponent, ImageOff, PackageSearch, ChevronLeft, ChevronRight, X, SlidersHorizontal, ChevronDown, LayoutGrid, List },
+  components: { loadComponent, WishlistHeart, StarRating, ImageOff, PackageSearch, ChevronLeft, ChevronRight, X, SlidersHorizontal, ChevronDown, LayoutGrid, List },
 
   data() {
     return {
@@ -174,11 +195,12 @@ export default {
       total: 0,
       view: 'grid',
       showSidebar: false,
-      open: { price: true, avail: true },
+      open: { price: true, avail: true, cat: true },
     };
   },
 
   computed: {
+    catalog() { return useCatalogStore(); },
     priceRanges() {
       return [
         { label: this.$t('productsList.ranges.any'), min: '', max: '' },
@@ -191,7 +213,7 @@ export default {
     activeFilters() {
       const f = this.filters;
       const has = (v) => v !== '' && v !== null;
-      return (has(f.min_price) || has(f.max_price) ? 1 : 0) + (f.in_stock ? 1 : 0);
+      return (has(f.min_price) || has(f.max_price) ? 1 : 0) + (f.in_stock ? 1 : 0) + (has(f.category) ? 1 : 0);
     },
     chips() {
       const f = this.filters;
@@ -201,6 +223,10 @@ export default {
         const label = has(f.min_price) && has(f.max_price) ? this.$t('productsList.chipRange', { min: f.min_price, max: f.max_price })
           : has(f.min_price) ? this.$t('productsList.chipFrom', { min: f.min_price }) : this.$t('productsList.chipUpTo', { max: f.max_price });
         out.push({ key: 'price', label, clear: () => { f.min_price = ''; f.max_price = ''; this.applyFilters(); } });
+      }
+      if (has(f.category)) {
+        const c = this.catalog.categories.find((x) => x.id === f.category);
+        if (c) out.push({ key: 'category', label: this.catalog.nameOf(c, this.$i18n.locale), clear: () => { f.category = ''; this.applyFilters(); } });
       }
       if (f.in_stock) out.push({ key: 'stock', label: this.$t('productsList.chipInStock'), clear: () => { f.in_stock = false; this.applyFilters(); } });
       return out;
@@ -234,6 +260,10 @@ export default {
         }
       },
     },
+  },
+
+  created() {
+    this.catalog.load();
   },
 
   beforeUnmount() {
@@ -288,7 +318,8 @@ export default {
         if (f.min_price !== '' && f.min_price !== null) params.min_price = f.min_price;
         if (f.max_price !== '' && f.max_price !== null) params.max_price = f.max_price;
         if (f.in_stock) params.in_stock = true;
-        const response = await api.get('http://127.0.0.1:8000/core/products/', { params });
+        if (f.category !== '' && f.category !== null) params.category = f.category;
+        const response = await api.get('/core/products/', { params });
         this.totalPages = response.data['total_pages'];
         this.total = response.data['count'] ?? response.data['results'].length;
         this.products = response.data['results'];
@@ -305,6 +336,8 @@ export default {
 </script>
 
 <style scoped>
+.thumb-wrap { position: relative; }
+.heart-pos { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 1; }
 /* override global .page-content flex layout applied to router-view root */
 .products-page {
   display: block;

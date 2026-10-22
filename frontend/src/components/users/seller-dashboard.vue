@@ -38,6 +38,51 @@
         </template>
       </div>
     </section>
+
+    <section class="insights">
+      <div class="stat">
+        <span class="stat-label">{{ $t('sellerTools.revenue7') }}</span>
+        <span class="stat-value">{{ stats ? fmt(stats.revenue_7, 2) : '—' }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">{{ $t('sellerTools.revenue30') }}</span>
+        <span class="stat-value">{{ stats ? fmt(stats.revenue_30, 2) : '—' }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">{{ $t('sellerTools.toProcess') }}</span>
+        <span class="stat-value">{{ stats ? fmt((stats.orders_by_status.pending || 0) + (stats.orders_by_status.confirmed || 0)) : '—' }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">{{ $t('sellerTools.toDeliver') }}</span>
+        <span class="stat-value">{{ stats ? fmt(stats.orders_by_status.shipped || 0) : '—' }}</span>
+      </div>
+    </section>
+
+    <div v-if="stats" class="two-col">
+      <section class="card">
+        <div class="card-header"><h2>{{ $t('sellerTools.topProducts') }}</h2></div>
+        <p v-if="!stats.top_products.length" class="list-empty">{{ $t('sellerTools.noSalesYet') }}</p>
+        <ol v-else class="rank">
+          <li v-for="t in stats.top_products" :key="t.id">
+            <router-link :to="'/products/' + t.id">{{ t.name }}</router-link>
+            <span>{{ $t('sellerTools.units', { count: fmt(t.units) }) }}</span>
+          </li>
+        </ol>
+      </section>
+      <section class="card">
+        <div class="card-header">
+          <h2>{{ $t('sellerTools.lowStock') }}</h2>
+          <router-link to="/inventory" class="card-link">{{ $t('sellerTools.manage') }}</router-link>
+        </div>
+        <p v-if="!stats.low_stock.length" class="list-empty">{{ $t('sellerTools.stockOk') }}</p>
+        <ul v-else class="rank">
+          <li v-for="p in stats.low_stock" :key="p.id">
+            <router-link :to="'/products/' + p.id">{{ p.name }}</router-link>
+            <span :class="{ out: p.inventory === 0 }">{{ p.inventory === 0 ? $t('sellerTools.out') : $t('sellerTools.left', { count: p.inventory }) }}</span>
+          </li>
+        </ul>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -54,6 +99,7 @@ export default {
   components: { Line },
   
   async mounted(){
+    this.loadStats()
 
     try {
       await this.loadWindow()
@@ -74,7 +120,8 @@ export default {
       labels:  null,
       windowDays: 7,
       loaded: false,
-      failed: false
+      failed: false,
+      stats: null
     }
   },
 
@@ -165,6 +212,13 @@ export default {
   },
 
   methods: {
+    async loadStats() {
+      try {
+        this.stats = (await api.get('/core/seller/stats/')).data
+      } catch (error) {
+        this.stats = null
+      }
+    },
     fmt(n, digits = 0) {
       return new Intl.NumberFormat(this.$i18n.locale, { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(Number(n))
     },
@@ -178,7 +232,7 @@ export default {
     // Days shown = min(7, calendar days since the account was created, inclusive of today).
     // Accounts 7 days old or newer only show days that exist; older accounts show the last 7.
     async loadWindow() {
-      const response = await api.get('http://127.0.0.1:8000/signup/get_id/me/')
+      const response = await api.get('/signup/get_id/me/')
       const joined = response.data.date_joined ? new Date(response.data.date_joined) : null
       if (!joined || Number.isNaN(joined.getTime())) return
       const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
@@ -187,7 +241,7 @@ export default {
     },
 
     async fetchOrders() {
-      const url = 'http://127.0.0.1:8000/core/orders/'
+      const url = '/core/orders/'
       const date = new Date()
       date.setDate(date.getDate() - (this.windowDays - 1))
       const year = date.getFullYear()
@@ -312,5 +366,15 @@ export default {
   pointer-events: none;
 }
 .chart-state-error { color: var(--color-error); }
+.insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.card-header { display: flex; align-items: baseline; justify-content: space-between; }
+.card-link { font-size: 0.85rem; }
+.list-empty { margin: 0; color: var(--color-text-muted); }
+.rank { list-style: none; margin: 0; padding: 0; }
+.rank li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+.rank li:first-child { border-top: none; }
+.rank span { color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rank .out { color: var(--color-error); }
 .chart-empty { align-items: center; padding-bottom: 2rem; }
 </style>

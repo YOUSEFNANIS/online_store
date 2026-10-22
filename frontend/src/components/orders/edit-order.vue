@@ -56,8 +56,8 @@ import api from '@/services/api';
             async save() {
                 try {
                   // 3. Send the PUT request to your backend
-                  // Assuming your API expects: http://127.0.0.1:8000/orders/{id}/
-                const response = await api.patch(`http://127.0.0.1:8000/core/orders/${this.id}/`, {'location': this.location, 'total_value': this.price});
+                  // Assuming your API expects: /orders/{id}/
+                const response = await api.patch(`/core/orders/${this.id}/`, {'location': this.location, 'total_value': this.price});
 
                   // 4. (Optional) Redirect the user back to the list or details page
                 this.$router.push('/orderslist'); 

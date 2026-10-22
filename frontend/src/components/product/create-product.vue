@@ -22,6 +22,14 @@
             <label class="label" for="p-desc">{{ $t('createProduct.description') }}</label>
             <textarea id="p-desc" v-model="product.description" class="textarea" :placeholder="$t('createProduct.descriptionPlaceholder')"></textarea>
           </div>
+
+          <div v-if="catalog.categories.length" class="field">
+            <label class="label" for="p-cat">{{ $t('createProduct.category') }}</label>
+            <select id="p-cat" v-model="product.category" class="input">
+              <option value="">{{ $t('createProduct.noCategory') }}</option>
+              <option v-for="c in catalog.categories" :key="c.id" :value="c.id">{{ catalog.nameOf(c, $i18n.locale) }}</option>
+            </select>
+          </div>
         </section>
 
         <section class="card">
@@ -74,6 +82,7 @@
 <script>
 
 import api from '@/services/api';
+import { useCatalogStore } from '@/stores/catalog';
 
 
 export default {
@@ -85,6 +94,7 @@ export default {
         description: "",
         price: null,
         inventory: 0,
+        category: '',
         },
         imagesfile: [],
         imagePreviews: [],
@@ -92,6 +102,12 @@ export default {
         dragging: false,
     }
   },
+
+  computed: {
+    catalog() { return useCatalogStore() },
+  },
+
+  created() { this.catalog.load() },
 
   methods: {
 
@@ -122,24 +138,20 @@ export default {
     async saveProduct() {
 
               try{
-                const response = await api.post('/core/products/', this.product)
+                const response = await api.post('/core/products/', { ...this.product, category: this.product.category || null })
                       this.product_id = response.data.id
                   }
               catch(error){
                     console.log(error.response)
                   }
               try {
-                const formData = new FormData()
-
-                for (let file of this.imagesfile){
-                  formData.append("image", file)
-                  formData.append("product", this.product_id)
-                }
                 const url = '/core/products/' + this.product_id + '/images/';
-                    const response = await api.post(url,  formData,{headers:
-                        {
-                          "Content-Type": "multipart/form-data"
-                        }})
+                // The images endpoint takes one file per request, so send them one by one in order.
+                for (const file of this.imagesfile) {
+                  const formData = new FormData()
+                  formData.append("image", file)
+                  await api.post(url, formData, { headers: { "Content-Type": "multipart/form-data" } })
+                }
                 this.$emit('saved', true);
                     }
               catch(error){
