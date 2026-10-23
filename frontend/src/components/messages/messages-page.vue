@@ -324,9 +324,9 @@ export default {
 </script>
 
 <style scoped>
-/* Fill the viewport under the fixed navbar (60px) + side menu (50px), WhatsApp Web style. */
+/* Fill the viewport under the fixed navbar + side menu (50px), WhatsApp Web style. */
 .messages-wrapper {
-  position: fixed; top: 110px; bottom: 0; inset-inline: 0;
+  position: fixed; top: calc(var(--app-bar-live-h, var(--app-bar-h)) + 50px); bottom: 0; inset-inline: 0;
   width: auto; height: auto; margin: 0; display: block;
   background: var(--color-bg);
 }

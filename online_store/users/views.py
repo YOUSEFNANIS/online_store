@@ -5,6 +5,7 @@ from django.contrib.auth.tokens import default_token_generator
 from online_store.validator import validate_password
 from .serializer import CustomerSerializer, SellerSerializer, SellerListSerializer
 from online_store.permissions import IsOwnerOrAdmin, IsCustomer
+from core.order_flow import owner_of
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -125,10 +126,11 @@ class getUserView(ViewSet):
 
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
-        user = request.user
-        # customer_pk / seller_pk come from the auth query, so no hasattr() probe query.
-        if getattr(user, 'customer_pk', None) is not None:
-            user_object = customer.objects.get(pk=user.customer_pk)
+        # owner_of reads customer_pk / seller_pk from the auth query, with a fallback lookup
+        # for other auth paths (e.g. force_authenticate in tests).
+        role, pk = owner_of(request.user)
+        if role == 'customer':
+            user_object = customer.objects.get(pk=pk)
             id = getattr(user_object, 'id', "Default Value")
             url = user_object.profile_image.url if user_object.profile_image else None
             return Response({
@@ -142,10 +144,11 @@ class getUserView(ViewSet):
             'profile_image': url,
             })
         
-        elif getattr(user, 'seller_pk', None) is not None:
-            user_object = seller.objects.get(pk=user.seller_pk)
+        elif role == 'seller':
+            user_object = seller.objects.get(pk=pk)
             id = getattr(user_object, 'id', "Default Value")
             url = user_object.profile_image.url if user_object.profile_image else None
+            store_url = user_object.store_image.url if user_object.store_image else None
             return Response({
                 "id": id,
                 "first_name": request.user.first_name,
@@ -156,40 +159,46 @@ class getUserView(ViewSet):
                 "balance": getattr(user_object, 'balance', None),
                 "phone_number": getattr(user_object, 'phone_number', None),
                 'profile_image': url,
+                'store_name': user_object.store_name,
+                'store_image': store_url,
             })
-    
+        return Response({'detail': 'No customer or seller profile.'}, status=status.HTTP_404_NOT_FOUND)
+
 class CustomerViewset(ModelViewSet):
     permission_classes = [IsOwnerOrAdmin]
-    queryset = customer.objects.all()
+    queryset = customer.objects.order_by('id')
     serializer_class = CustomerSerializer
 
 class SellerViewset(ModelViewSet):
     permission_classes = [IsOwnerOrAdmin]
-    queryset = seller.objects.all()
+    queryset = seller.objects.order_by('id')
     serializer_class = SellerSerializer
 
+def seller_directory_queryset():
+    from core.models import product, Review
+    # Correlated subqueries: no product x review join fan-out, no GROUP BY, and
+    # the pagination COUNT drops them since it does not use them.
+    seller_products = product.objects.filter(seller=OuterRef('pk')).order_by().values('seller').annotate(total=Count('pk')).values('total')
+    seller_reviews = Review.objects.filter(product__seller=OuterRef('pk')).order_by().values('product__seller')
+    return (
+        seller.objects
+        .only('id', 'store_name', 'store_image')
+        .annotate(
+            product_count=Coalesce(Subquery(seller_products, output_field=IntegerField()), 0),
+            rating_count=Coalesce(Subquery(seller_reviews.annotate(total=Count('pk')).values('total'), output_field=IntegerField()), 0),
+            rating_avg=Subquery(seller_reviews.annotate(average=Avg('rating')).values('average'), output_field=FloatField()),
+        )
+        .order_by('store_name')
+    )
+
+
 class SellerListViewset(ReadOnlyModelViewSet):
-    # Customer-facing directory; public fields only (no email/phone/balance).
+    # Customer-facing directory; store identity only (no owner name/email/phone/balance).
     permission_classes = [IsAuthenticated, IsCustomer]
     serializer_class = SellerListSerializer
 
     def get_queryset(self):
-        from core.models import product, Review
-        # Correlated subqueries: no product x review join fan-out, no GROUP BY, and
-        # the pagination COUNT drops them since it does not use them.
-        seller_products = product.objects.filter(seller=OuterRef('pk')).order_by().values('seller').annotate(total=Count('pk')).values('total')
-        seller_reviews = Review.objects.filter(product__seller=OuterRef('pk')).order_by().values('product__seller')
-        return (
-            seller.objects
-            .select_related('user')
-            .only('id', 'store_name', 'profile_image', 'user__id', 'user__first_name', 'user__last_name')
-            .annotate(
-                product_count=Coalesce(Subquery(seller_products, output_field=IntegerField()), 0),
-                rating_count=Coalesce(Subquery(seller_reviews.annotate(total=Count('pk')).values('total'), output_field=IntegerField()), 0),
-                rating_avg=Subquery(seller_reviews.annotate(average=Avg('rating')).values('average'), output_field=FloatField()),
-            )
-            .order_by('store_name')
-        )
+        return seller_directory_queryset()
 
 
 class _AuthEmailView(APIView):

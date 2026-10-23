@@ -176,6 +176,7 @@ export default {
               const cart = await api.get('/core/cart/')
               const url = '/core/cart/' + cart.data[0].id + '/cartitem/'
               await api.post(url, {'product': this.product.id, 'quantity': 1, 'cart': cart.data[0].id})
+              window.dispatchEvent(new CustomEvent('cart-updated'));
               this.added = true;
               clearTimeout(this.addedTimer);
               this.addedTimer = setTimeout(() => { this.added = false }, 1500);

@@ -13,15 +13,14 @@
         <li v-for="s in sellers" :key="s.id">
         <router-link :to="'/sellers/' + s.id" class="card">
           <img
-            v-if="s.profile_image && !broken[s.id]"
-            :src="s.profile_image"
+            v-if="s.store_image && !broken[s.id]"
+            :src="s.store_image"
             alt=""
             class="avatar"
             @error="broken[s.id] = true"
           />
           <span v-else class="avatar fallback" aria-hidden="true">{{ (s.store_name || '?').charAt(0).toUpperCase() }}</span>
           <h2 class="store" :title="s.store_name">{{ s.store_name }}</h2>
-          <p class="name">{{ s.name }}</p>
           <star-rating v-if="s.rating_count" :value="s.rating_avg || 0" :count="s.rating_count" class="card-rating" />
         </router-link>
         </li>
@@ -133,7 +132,6 @@ export default {
   white-space: nowrap;
 }
 .card-rating { grid-column: 2; margin-top: 2px; }
-.name { margin: 0.2rem 0 0; align-self: start; font-size: 0.85rem; color: var(--color-text-muted); }
 
 .pager {
   display: flex;

@@ -42,6 +42,12 @@ import api from '@/services/api';
 import {MessageCircle} from '@lucide/vue';
 export default {
   components: {MessageCircle},
+    mounted(){
+        window.addEventListener('open-help', this.openChat)
+    },
+    beforeUnmount(){
+        window.removeEventListener('open-help', this.openChat)
+    },
     data(){
         return  {
             chat_id: 1,
@@ -89,6 +95,9 @@ export default {
         },
         toggleChat() {
                 this.isOpen = !this.isOpen;
+            },
+        openChat() {
+                this.isOpen = true;
             },
             async startchat(){
                     try{

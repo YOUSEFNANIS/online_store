@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Avg, Count, F, IntegerField, OuterRef, Prefetch, Subquery, Sum, Value, prefetch_related_objects
+from django.db.models import Avg, Count, F, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value, prefetch_related_objects
 from django.db.models.functions import Coalesce, Concat
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
@@ -264,9 +264,73 @@ class ReportViewSet(CreateModelMixin, GenericViewSet):
 
 class CategoryViewSet(ReadOnlyModelViewSet):
     serializer_class = serializer.CategorySerializer
-    queryset = models.Category.objects.all()
+    # In-stock count, same rule as the landing page, so menus can hide empty categories.
+    queryset = models.Category.objects.annotate(
+        product_count=Count('products', filter=Q(products__inventory__gt=0))).order_by('id')
     permission_classes = []
     pagination_class = None
+
+
+class HomeView(APIView):
+    """Everything the public landing page shows, in one cached payload."""
+    permission_classes = []
+    authentication_classes = []
+
+    CACHE_KEY = 'landing:home'
+    SECTIONS = 3
+    PER_SECTION = 5
+
+    def get(self, request):
+        data = cache.get(self.CACHE_KEY)
+        if data is None:
+            data = self.build(request)
+            cache.set(self.CACHE_KEY, data, timeout=60)
+        return Response(data)
+
+    def build(self, request):
+        from users.models import seller as seller_model
+        from users.serializer import SellerListSerializer
+        from users.views import seller_directory_queryset
+
+        in_stock = product_queryset().filter(inventory__gt=0).order_by('-id')
+        ctx = {'request': request}
+
+        categories = list(models.Category.objects
+                          .annotate(product_count=Count('products', filter=Q(products__inventory__gt=0)))
+                          .order_by('id')
+                          .values('id', 'slug', 'name_en', 'name_ar', 'product_count'))
+
+        # Terms shoppers actually buy: most-ordered product names over the last 30 days,
+        # topped up with the newest in-stock names so a young shop still shows chips.
+        since = timezone.now() - timedelta(days=30)
+        ordered = (models.order_item.objects.filter(order__creation_date__gte=since, product__inventory__gt=0)
+                   .values('product__name').annotate(total=Sum('quantity')).order_by('-total')
+                   .values_list('product__name', flat=True)[:6])
+        trending = list(ordered)
+        for name in in_stock.values_list('name', flat=True)[:30]:
+            if len(trending) >= 6:
+                break
+            if name not in trending:
+                trending.append(name)
+
+        sections = []
+        for category in sorted(categories, key=lambda c: -c['product_count'])[:self.SECTIONS]:
+            picked = list(in_stock.filter(category_id=category['id'])[:self.PER_SECTION])
+            if picked:
+                sections.append({'category': category['id'],
+                                 'products': serializer.ProductSerialzer(picked, many=True, context=ctx).data})
+
+        with_images = list(in_stock.filter(images__isnull=False).distinct()[:8])
+        stores = list(seller_directory_queryset().filter(product_count__gt=0).order_by('-product_count', 'store_name')[:8])
+
+        return {
+            'stats': {'stores': seller_model.objects.count(), 'products': models.product.objects.count()},
+            'categories': categories,
+            'trending': trending,
+            'sections': sections,
+            'hero_products': serializer.ProductSerialzer(with_images, many=True, context=ctx).data,
+            'stores': SellerListSerializer(stores, many=True, context=ctx).data,
+        }
 
 
 class WishlistViewSet(GenericViewSet):

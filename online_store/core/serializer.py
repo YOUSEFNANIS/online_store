@@ -272,9 +272,11 @@ class ReportSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    product_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = models.Category
-        fields = ['id', 'slug', 'name_en', 'name_ar']
+        fields = ['id', 'slug', 'name_en', 'name_ar', 'product_count']
 
 
 class LedgerEntrySerializer(serializers.ModelSerializer):

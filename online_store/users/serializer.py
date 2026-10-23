@@ -39,11 +39,12 @@ class SellerSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email')
     password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
     profile_image = serializers.ImageField(required=False, allow_null=True)
+    store_image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = seller
-        fields = ['id', 'store_name', 'first_name', 'last_name', 'email', 'password', 
-                'balance', 'profile_image', 'phone_number']
+        fields = ['id', 'store_name', 'first_name', 'last_name', 'email', 'password',
+                'balance', 'profile_image', 'store_image', 'phone_number']
         read_only_fields = ['balance']
 
     def create(self, validated_data):
@@ -71,6 +72,7 @@ class SellerSerializer(serializers.ModelSerializer):
                 store_name=store_name,
                 phone_number=validated_data.get('phone_number', ''),
                 profile_image=validated_data.get('profile_image'),
+                store_image=validated_data.get('store_image'),
             )
 
     def update(self, instance, validated_data):
@@ -80,21 +82,17 @@ class SellerSerializer(serializers.ModelSerializer):
         return validate_password(value)
 
 class SellerListSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
     product_count = serializers.IntegerField(read_only=True)
     rating_avg = serializers.SerializerMethodField()
     rating_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = seller
-        fields = ['id', 'store_name', 'name', 'profile_image', 'product_count', 'rating_avg', 'rating_count']
+        fields = ['id', 'store_name', 'store_image', 'product_count', 'rating_avg', 'rating_count']
 
     def get_rating_avg(self, obj):
         avg = getattr(obj, 'rating_avg', None)
         return round(avg, 1) if avg is not None else None
-
-    def get_name(self, obj):
-        return f"{obj.user.first_name} {obj.user.last_name}".strip()
 
 class CustomerSerializer(serializers.ModelSerializer):
     

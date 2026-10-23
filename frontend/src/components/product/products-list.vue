@@ -170,6 +170,7 @@
 
 <script>
 import api from '@/services/api';
+import { scrollToTarget } from '@/services/smooth-scroll';
 import loadComponent from '../helperComponents/load-component.vue';
 import WishlistHeart from '../helperComponents/wishlist-heart.vue';
 import { useCatalogStore } from '@/stores/catalog';
@@ -191,7 +192,7 @@ export default {
       searchTerm: null,
       failed: {},
       debounceTimer: null,
-      filters: defaultFilters(),
+      filters: { ...defaultFilters(), category: Number(this.$route.query.category) || '' },
       total: 0,
       view: 'grid',
       showSidebar: false,
@@ -248,6 +249,13 @@ export default {
   },
 
   watch: {
+    // Landing-page category links land here with ?category=<id>.
+    '$route.query.category'(category) {
+      const id = Number(category) || '';
+      if (id === this.filters.category) return;
+      this.filters.category = id;
+      this.applyFilters();
+    },
     '$route.query.searchQuery': {
       immediate: true,
       handler(searchQuery) {
@@ -306,7 +314,7 @@ export default {
       if (navPage < 1 || navPage > this.totalPages || navPage === this.currentPage) return;
       this.currentPage = navPage;
       this.getdata();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToTarget(0);
     },
     async getdata() {
       this.loading = true;
@@ -343,7 +351,11 @@ export default {
   display: block;
   width: 100%;
   height: auto;
-  margin-top: 130px; /* fixed navbar (60px) + category bar (50px) + gap */
+  /* Reserve the final viewport footprint while the catalog request is pending.
+     This keeps the footer below the fold instead of shifting it after products render. */
+  min-height: calc(100vh - var(--app-bar-h) - 70px);
+  min-height: calc(100svh - var(--app-bar-h) - 70px);
+  margin-top: calc(var(--app-bar-h) + 70px); /* fixed navbar + side menu (50px) + gap */
   padding-bottom: 96px; /* clear the floating chat button */
 }
 
@@ -357,7 +369,7 @@ export default {
 
 .layout { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
 .sidebar {
-  position: sticky; top: 126px;
+  position: sticky; top: calc(var(--app-bar-live-h, var(--app-bar-h)) + 66px);
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); padding: 4px 16px 8px; box-shadow: var(--shadow-sm);
 }

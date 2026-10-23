@@ -23,6 +23,7 @@ router.register('wishlist', views.WishlistViewSet, basename='wishlist')
 router.register('earnings', views.EarningsViewSet, basename='earnings')
 urlpatterns = [
     path('mail/', views.SendOrderReceiptView.as_view(), name='send-email'),
+    path('home/', views.HomeView.as_view(), name='home'),
     path('seller/stats/', seller_tools.SellerStatsView.as_view(), name='seller-stats'),
     path('seller/export/orders/', seller_tools.ExportOrdersView.as_view(), name='export-orders'),
     path('seller/export/earnings/', seller_tools.ExportEarningsView.as_view(), name='export-earnings'),

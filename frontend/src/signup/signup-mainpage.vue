@@ -2,32 +2,31 @@
     <div class="signup-container">
     <lang-switcher class="floating-lang" />
     <div class="signup-card">
+        <router-link to="/" class="brand"><img src="@/assets/logo.svg" :alt="$t('nav.logoAlt')" class="brand-logo" /></router-link>
         <h1 class="title">{{ $t('signup.title') }}</h1>
 
-        <form @submit.prevent="submitForm" novalidate>
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="progress"
+            :aria-label="$t('signup.progressAria')">
+            <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+        </div>
+        <p class="step-label">{{ $t('signup.stepOf', { current: step, total: totalSteps }) }} · {{ stepTitle }}</p>
+
+        <form @submit.prevent="onSubmit" novalidate>
 
         <div v-if="formError" class="form-error" role="alert">{{ formError }}</div>
 
-        <div class="image-container">
-        <div class="profile-circle" role="button" tabindex="0" :aria-label="$t('signup.uploadImage')"
-            @click="triggerImageUpload" @keyup.enter="triggerImageUpload">
-            <img v-if="form.profile_image" :src="form.profile_image" :alt="$t('signup.profileAlt')" class="profile-img"/>
-            <span v-else class="upload-placeholder">+</span>
-        </div>
-        <input type="file" accept="image/*" ref="fileInput" @change="handleImageChange" hidden />
-        </div>
-
-        <div class="field">
-            <div class="row" :class="{ invalid: errors.role }">
-                <select v-model="role" class="input select" :aria-label="$t('signup.role')" @change="clearError('role')">
-                <option disabled value="">{{ $t('signup.selectRole') }}</option>
-                <option value="seller">{{ $t('signup.seller') }}</option>
-                <option value="customer">{{ $t('signup.customer') }}</option>
-                </select>
+        <div v-if="step === 1" class="field">
+            <div class="role-options" role="radiogroup" :aria-label="$t('signup.role')">
+                <button v-for="r in ['customer', 'seller']" :key="r" type="button" role="radio" :aria-checked="role === r"
+                    :class="['role-card', { selected: role === r }]" @click="selectRole(r)">
+                    <span class="role-name">{{ $t('signup.' + r) }}</span>
+                    <span class="role-desc">{{ $t('signup.' + r + 'Desc') }}</span>
+                </button>
             </div>
             <p v-if="errors.role" class="field-error" role="alert">{{ errors.role }}</p>
         </div>
 
+        <template v-if="step === 2">
         <div class="name-row">
             <div class="field">
                 <div class="row" :class="{ invalid: errors.first_name }">
@@ -104,10 +103,54 @@
             <p v-if="errors.confirm" class="field-error" role="alert">{{ errors.confirm }}</p>
         </div>
 
-        <button type="submit" class="btn btn-primary submit-btn" :disabled="loading">
-            <span v-if="loading" class="spinner" aria-hidden="true"></span>
-            {{ loading ? $t('signup.creating') : $t('signup.submit') }}
-        </button>
+        </template>
+
+        <div v-if="step === 3" class="image-container">
+        <div class="avatar-picker" role="button" tabindex="0" :aria-label="$t('signup.uploadImage')"
+            @click="triggerImageUpload" @keyup.enter="triggerImageUpload">
+            <div class="profile-circle">
+                <img v-if="form.profile_image" :src="form.profile_image" :alt="$t('signup.profileAlt')" class="profile-img"/>
+                <svg v-else class="avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <circle cx="12" cy="8" r="3.5"/>
+                    <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <span class="camera-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 4 7.5 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.5L15 4H9zm3 4.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+            </span>
+        </div>
+        <input type="file" accept="image/*" ref="fileInput" @change="handleImageChange" hidden />
+        <p class="field-hint">{{ $t('signup.imageHint') }}</p>
+        <template v-if="role === 'seller'">
+            <div class="avatar-picker store-logo" role="button" tabindex="0" :aria-label="$t('signup.uploadStoreImage')"
+                @click="$refs.storeInput.click()" @keyup.enter="$refs.storeInput.click()">
+                <div class="profile-circle">
+                    <img v-if="form.store_image" :src="form.store_image" :alt="$t('signup.storeAlt')" class="profile-img"/>
+                    <svg v-else class="avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5V20h16V9.5M9 20v-5h6v5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="camera-badge" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 4 7.5 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.5L15 4H9zm3 4.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+                </span>
+            </div>
+            <input type="file" accept="image/*" ref="storeInput" @change="handleStoreImageChange" hidden />
+            <p class="field-hint">{{ $t('signup.storeImageHint') }}</p>
+        </template>
+        </div>
+
+        <div class="actions">
+            <button v-if="step > 1" type="button" class="btn back-btn" :disabled="loading" @click="back">
+                {{ $t('signup.back') }}
+            </button>
+            <button v-if="step < totalSteps" type="button" class="btn btn-primary submit-btn" @click="next">
+                {{ $t('signup.next') }}
+            </button>
+            <button v-else type="submit" class="btn btn-primary submit-btn" :disabled="loading">
+                <span v-if="loading" class="spinner" aria-hidden="true"></span>
+                {{ loading ? $t('signup.creating') : $t('signup.submit') }}
+            </button>
+        </div>
         <footer class="footer">{{ $t('signup.haveAccount') }}
             <router-link to="/login" class="link">{{ $t('signup.logIn') }}</router-link>
         </footer>
@@ -131,12 +174,16 @@ export default {
         email: "",
         password: "",
         phone_number: "",
-        profile_image: null
+        profile_image: null,
+        store_image: null
         },
         storeName: "",
         role: "",
+        step: 1,
+        totalSteps: 3,
         confirmPassword: "",
         selectedFile: null,
+        selectedStoreFile: null,
         passwordVisible: false,
         ConfirmVisible: false,
         errors: {},
@@ -145,6 +192,12 @@ export default {
     };
     },
     computed: {
+        progress() {
+            return Math.round(((this.step - 1) / this.totalSteps) * 100)
+        },
+        stepTitle() {
+            return this.$t('signup.steps.' + this.step)
+        },
         passwordRules() {
             const p = this.form.password
             return [
@@ -159,6 +212,26 @@ export default {
     methods: {
         triggerImageUpload() {
             this.$refs.fileInput.click();
+        },
+        selectRole(r) {
+            this.role = r
+            this.clearError('role')
+        },
+        next() {
+            if (this.validateStep(this.step)) {
+                this.formError = ''
+                this.step++
+            }
+        },
+        back() {
+            if (this.step > 1) {
+                this.formError = ''
+                this.step--
+            }
+        },
+        onSubmit() {
+            if (this.step < this.totalSteps) this.next()
+            else this.submitForm()
         },
         clearError(field) {
             if (this.errors[field]) this.errors = { ...this.errors, [field]: '' }
@@ -175,21 +248,35 @@ export default {
             this.formError = this.$t('signup.errors.invalidImage')
         }
     },
+    handleStoreImageChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (file.type.startsWith('image/')) {
+            this.selectedStoreFile = file;
+            this.form.store_image = URL.createObjectURL(file);
+            this.formError = ''
+        } else {
+            this.formError = this.$t('signup.errors.invalidImage')
+        }
+    },
 
-    validate() {
+    validateStep(step) {
         const e = {}
         const f = this.form
-        if (!this.role) e.role = this.$t('signup.errors.role')
-        if (!f.first_name) e.first_name = this.$t('signup.errors.firstName')
-        if (!f.last_name) e.last_name = this.$t('signup.errors.lastName')
-        if (!f.email) e.email = this.$t('signup.errors.emailRequired')
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = this.$t('signup.errors.emailInvalid')
-        if (this.role === 'seller' && !this.storeName) e.store_name = this.$t('signup.errors.storeName')
-        if (!f.phone_number) e.phone_number = this.$t('signup.errors.phone')
-        if (!f.password) e.password = this.$t('signup.errors.passwordRequired')
-        else if (this.passwordRules.some(r => !r.met)) e.password = this.$t('signup.errors.passwordRules')
-        if (!this.confirmPassword) e.confirm = this.$t('signup.errors.confirmRequired')
-        else if (f.password !== this.confirmPassword) e.confirm = this.$t('signup.errors.mismatch')
+        if (step === 1) {
+            if (!this.role) e.role = this.$t('signup.errors.role')
+        } else if (step === 2) {
+            if (!f.first_name) e.first_name = this.$t('signup.errors.firstName')
+            if (!f.last_name) e.last_name = this.$t('signup.errors.lastName')
+            if (!f.email) e.email = this.$t('signup.errors.emailRequired')
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = this.$t('signup.errors.emailInvalid')
+            if (this.role === 'seller' && !this.storeName) e.store_name = this.$t('signup.errors.storeName')
+            if (!f.phone_number) e.phone_number = this.$t('signup.errors.phone')
+            if (!f.password) e.password = this.$t('signup.errors.passwordRequired')
+            else if (this.passwordRules.some(r => !r.met)) e.password = this.$t('signup.errors.passwordRules')
+            if (!this.confirmPassword) e.confirm = this.$t('signup.errors.confirmRequired')
+            else if (f.password !== this.confirmPassword) e.confirm = this.$t('signup.errors.mismatch')
+        }
         this.errors = e
         if (Object.keys(e).length) this.formError = this.$t('signup.errors.fixFields')
         return Object.keys(e).length === 0
@@ -209,6 +296,7 @@ export default {
                 else errs[key] = msg
             }
             this.errors = errs
+            if (Object.keys(errs).some(k => k !== 'profile_image' && k !== 'store_image')) this.step = 2
             if (!this.formError) this.formError = this.$t('signup.errors.fixFields')
         } else if (status >= 500) {
             this.formError = this.$t('signup.errors.server')
@@ -218,7 +306,7 @@ export default {
     },
 
     async submitForm(){
-        if (this.loading || !this.validate()) return
+        if (this.loading || !this.validateStep(1) || !this.validateStep(2)) return
         this.loading = true
         this.formError = ''
         try{
@@ -233,6 +321,7 @@ export default {
             formData.append('email', this.form.email);
             formData.append('password', this.form.password);
             if (this.selectedFile) formData.append('profile_image', this.selectedFile);
+            if (this.role === 'seller' && this.selectedStoreFile) formData.append('store_image', this.selectedStoreFile);
             await api.post(url, formData)
             this.$emit('saved', true);
             this.$router.push('/')
@@ -267,6 +356,8 @@ export default {
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-md);
 }
+.brand { display: flex; justify-content: center; margin-bottom: 12px; }
+.brand-logo { height: 56px; width: auto; }
 .title {
   text-align: center;
   font-size: 1.75rem;
@@ -405,28 +496,93 @@ export default {
   text-decoration: none;
 }
 .link:hover { color: var(--color-primary-hover); text-decoration: underline; }
-.image-container { display: flex; justify-content: center; margin-bottom: 20px; }
+.image-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
 .profile-circle {
-  width: 72px;
-  height: 72px;
-  background: var(--color-bg);
+  width: 120px;
+  height: 120px;
+  background: #e8f0fe;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   overflow: hidden;
-  border: 2px dashed var(--color-text-muted);
+  color: #1a73e8;
+  border: 2px solid #d2e3fc;
   transition: border-color var(--transition);
 }
-.profile-circle:hover { border-color: var(--color-primary); }
+.avatar-picker {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.avatar-picker:hover .profile-circle,
+.avatar-picker:focus-visible .profile-circle { border-color: #1a73e8; }
+.avatar-picker.store-logo { margin-top: 16px; border-radius: var(--radius-md); }
+.avatar-picker.store-logo .profile-circle { border-radius: var(--radius-md); }
+.avatar-icon { width: 60%; height: 60%; }
+.camera-badge {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1a73e8;
+  color: #fff;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.camera-badge svg { width: 16px; height: 16px; }
 .profile-img { width: 100%; height: 100%; object-fit: cover; }
-.upload-placeholder { font-size: 2rem; line-height: 1; color: var(--color-text-muted); }
 .name-row { display: flex; gap: 14px; }
-.select { cursor: pointer; }
+.progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.step-label {
+  margin: 8px 0 20px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.role-options { display: flex; gap: 14px; }
+.role-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  text-align: start;
+  cursor: pointer;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition);
+}
+.role-card:hover { border-color: var(--color-text-muted); }
+.role-card.selected { border-color: var(--color-primary); }
+.role-name { font-weight: 700; font-size: 1.05rem; }
+.role-desc { font-size: 0.85rem; color: var(--color-text-muted); }
+.actions { display: flex; gap: 12px; margin-top: 8px; }
+.actions .submit-btn { margin-top: 0; flex: 1; }
+.back-btn { min-height: 44px; cursor: pointer; }
+.image-container { flex-direction: column; align-items: center; }
 @media (max-width: 480px) {
   .signup-card { padding: 24px 18px 20px; }
   .title { font-size: 1.5rem; }
   .name-row { flex-direction: column; gap: 0; }
+  .role-options { flex-direction: column; }
 }
 </style>

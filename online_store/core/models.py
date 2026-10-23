@@ -2,6 +2,7 @@ from django.db import models
 from users.models import seller, customer
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
+from .images import as_webp
 
 class Category(models.Model):
     slug = models.SlugField(unique=True)
@@ -28,6 +29,13 @@ class productImage(models.Model):
     image = models.ImageField(upload_to='images/')
     product = models.ForeignKey(product, related_name='images', on_delete=models.CASCADE)
     validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp'])]
+
+    def save(self, *args, **kwargs):
+        # Convert every newly assigned file here so API, admin, seed scripts,
+        # and direct model use all store the same efficient format.
+        if self.image and not self.image._committed:
+            self.image = as_webp(self.image)
+        return super().save(*args, **kwargs)
 
 class order(models.Model):
 

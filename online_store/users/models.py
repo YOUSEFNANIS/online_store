@@ -10,6 +10,8 @@ class seller(models.Model):
     balance = models.DecimalField(max_digits=10, decimal_places=3, default=0, blank=True)
     user = models.OneToOneField(to=User, on_delete=models.PROTECT)
     profile_image = models.ImageField(null=True, blank=True)
+    # Store logo shown to customers; profile_image is the owner's own photo.
+    store_image = models.ImageField(null=True, blank=True)
     phone_number = models.CharField(max_length=11)
     def __str__(self):
         username = self.user.first_name + ' ' + self.user.last_name

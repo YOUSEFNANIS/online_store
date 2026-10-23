@@ -31,7 +31,7 @@ export default {
 .orders-page {
   width: 100%;
   max-width: 1100px;
-  /* .page-content already adds 5% (of width); fixed bars cover 110px, plus 24px gap */
+  /* sits under .page-content's navbar offset; this clears the 50px side menu plus a gap */
   margin: max(24px, calc(134px - 5vw)) auto 64px;
   padding: 0 16px;
   color: var(--color-text);

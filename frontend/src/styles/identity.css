@@ -24,11 +24,14 @@
   --shadow-md: 0 4px 12px rgba(17, 24, 39, 0.08);
   --shadow-lg: 0 12px 32px rgba(17, 24, 39, 0.14);
   --focus-ring: 0 0 0 3px rgba(26, 86, 219, 0.35);
-  --font-sans: 'Inter', 'Tajawal', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --transition: 0.15s ease;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+
+/* Keep the viewport width stable when async page content starts overflowing. */
+html { scrollbar-gutter: stable; }
 
 body {
   margin: 0;

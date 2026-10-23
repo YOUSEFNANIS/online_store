@@ -6,5 +6,9 @@
   "phone": "phone number",
   "save": "save",
   "cancel": "cancel",
-  "invalidImage": "Please select a valid image file."
+  "invalidImage": "Please select a valid image file.",
+  "store": "Store",
+  "storeName": "store name",
+  "uploadStoreAria": "upload store image",
+  "storeAlt": "Store"
 }

@@ -65,6 +65,7 @@ export default {
       try {const url = '/core/cart/' + this.cart_id + '/cartitem/' + this.cartData[index].id + '/' 
       const response = await api.delete(url)
       delete this.cartData[index]
+      window.dispatchEvent(new CustomEvent('cart-updated'))
       }
       catch(error){
         console.log(error)

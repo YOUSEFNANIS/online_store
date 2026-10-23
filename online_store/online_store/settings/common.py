@@ -8,6 +8,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Application definition
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Uploaded files receive collision-safe names, so their URLs can be cached for a
+# year. The development media view uses this value; production web servers or
+# object storage should be configured with the same policy.
+MEDIA_CACHE_MAX_AGE = 60 * 60 * 24 * 365
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,6 +61,7 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,
         }
     }
 }

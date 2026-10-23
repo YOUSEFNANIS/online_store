@@ -6,5 +6,9 @@
   "phone": "رقم الهاتف",
   "save": "حفظ",
   "cancel": "إلغاء",
-  "invalidImage": "يرجى اختيار ملف صورة صالح."
+  "invalidImage": "يرجى اختيار ملف صورة صالح.",
+  "store": "المتجر",
+  "storeName": "اسم المتجر",
+  "uploadStoreAria": "رفع صورة المتجر",
+  "storeAlt": "المتجر"
 }

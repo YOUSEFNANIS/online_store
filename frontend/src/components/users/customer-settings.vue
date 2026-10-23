@@ -5,10 +5,26 @@
         <img v-if="userData.profile_image" :src="userData.profile_image" :alt="$t('customerSettings.profileAlt')" class="profile-img"/>
         <span v-else class="upload-placeholder">+</span>
       </div>
-      <input type="file" ref="fileInput" @change="handleImageChange" hidden />
+      <input type="file" accept="image/*" ref="fileInput" @change="handleImageChange" hidden />
     </div>
 
     <form @submit.prevent="saveProfile" class="profile-form">
+      <fieldset v-if="isSeller" class="store-section">
+        <legend>{{ $t('customerSettings.store') }}</legend>
+        <div class="store-row">
+          <div class="store-logo" role="button" tabindex="0" :aria-label="$t('customerSettings.uploadStoreAria')" @click="$refs.storeInput.click()" @keydown.enter="$refs.storeInput.click()">
+            <img v-if="userData.store_image" :src="userData.store_image" :alt="$t('customerSettings.storeAlt')" class="profile-img"/>
+            <span v-else class="upload-placeholder">+</span>
+          </div>
+          <input type="file" accept="image/*" ref="storeInput" @change="handleStoreImageChange" hidden />
+          <div class="input-group">
+            <input type="text" v-model="userData.store_name" maxlength="20" required />
+            <label>{{ $t('customerSettings.storeName') }}</label>
+            <span class="bar"></span>
+          </div>
+        </div>
+      </fieldset>
+
       <div class="row">
         <div class="input-group">
           <input type="text" v-model="userData.first_name" required />
@@ -51,11 +67,19 @@ export default {
         first_name: '',
         last_name: '',
         phone_number: '',
-        profile_image: null
+        profile_image: null,
+        store_name: '',
+        store_image: null
     },
       original: {},
-      selectedFile: null
+      selectedFile: null,
+      selectedStoreFile: null
     };
+  },
+  computed: {
+    isSeller() {
+      return useRoleStore().role === 'seller'
+    }
   },
   methods: {
     triggerImageUpload() {
@@ -73,6 +97,15 @@ export default {
         alert(this.$t('customerSettings.invalidImage'));
       }
     },
+    handleStoreImageChange(event) {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        this.selectedStoreFile = file;
+        this.userData.store_image = URL.createObjectURL(file);
+      } else {
+        alert(this.$t('customerSettings.invalidImage'));
+      }
+    },
     async retreivedata(){
       const url = '/signup/get_id/me'
       const response = await api.get(url)
@@ -82,13 +115,17 @@ export default {
         last_name: data.last_name || '',
         phone_number: data.phone_number || '',
         profile_image: data.profile_image ? API_URL + data.profile_image : null,
+        store_name: data.store_name || '',
+        store_image: data.store_image ? API_URL + data.store_image : null,
       }
       this.original = { ...this.userData }
       this.user_id = data.id
     },
     async saveProfile() {
       const formData = new FormData();
-      for (const key of ['first_name', 'last_name', 'phone_number']) {
+      const keys = ['first_name', 'last_name', 'phone_number']
+      if (this.isSeller) keys.push('store_name')
+      for (const key of keys) {
         if (this.userData[key] !== this.original[key]) {
           formData.append(key, this.userData[key]);
         }
@@ -96,9 +133,12 @@ export default {
       if (this.selectedFile) {
         formData.append('profile_image', this.selectedFile);
       }
+      if (this.isSeller && this.selectedStoreFile) {
+        formData.append('store_image', this.selectedStoreFile);
+      }
 
       try{
-        const role = useRoleStore().role === 'seller' ? 'seller' : 'customer'
+        const role = this.isSeller ? 'seller' : 'customer'
         const url = '/signup/' + role + '/' + this.user_id + '/'
 
         const response = await api.patch(url, formData)
@@ -210,6 +250,38 @@ export default {
 .input-group input:focus ~ label { color: var(--color-primary); }
 .input-group .bar { display: none; }
 .full-width { margin-bottom: 2rem; }
+.store-section {
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.store-section legend {
+  padding: 0 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.store-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.store-logo {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+.store-logo:hover { border-color: var(--color-primary); }
 .button-group {
   display: flex;
   justify-content: flex-end;

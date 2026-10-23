@@ -6,11 +6,10 @@
     <p v-else-if="!seller" class="state" role="status">{{ $t('storefront.loading') }}</p>
     <template v-else>
       <header class="store-head">
-        <img v-if="seller.profile_image && !logoBroken" :src="seller.profile_image" alt="" class="logo" @error="logoBroken = true" />
+        <img v-if="seller.store_image && !logoBroken" :src="seller.store_image" alt="" class="logo" @error="logoBroken = true" />
         <span v-else class="logo fallback" aria-hidden="true">{{ (seller.store_name || '?').charAt(0).toUpperCase() }}</span>
         <div>
           <h1>{{ seller.store_name }}</h1>
-          <p class="owner">{{ seller.name }}</p>
           <p class="meta">{{ $t('storefront.productsCount', { count: seller.product_count }) }}</p>
           <star-rating :value="seller.rating_avg || 0" :count="seller.rating_count || 0" :empty-label="$t('reviews.noRatings')" />
           <div class="store-actions">
@@ -148,7 +147,6 @@ export default {
 .toast.error { background: #c0392b; }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.25s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; }
-.owner { margin: 0.2rem 0 0; color: var(--color-text-muted); }
 .meta { margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--color-text-muted); }
 .logo { width: 88px; height: 88px; border-radius: var(--radius-md); object-fit: cover; border: 1px solid var(--color-border); flex-shrink: 0; }
 .fallback { display: flex; align-items: center; justify-content: center; background: #e8efff; color: #1a56db; font-size: 2rem; font-weight: 700; }

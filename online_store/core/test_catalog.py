@@ -75,6 +75,10 @@ class ImagePermissionTests(APITestCase):
         created = self.upload()
         self.assertEqual(created.status_code, 201, created.content)
         image_id = created.json()['id']
+        stored = models.productImage.objects.get(pk=image_id)
+        self.assertTrue(stored.image.name.endswith('.webp'))
+        with Image.open(stored.image.path) as image:
+            self.assertEqual(image.format, 'WEBP')
         self.assertEqual(self.client.delete(f'{self.url}{image_id}/').status_code, 204)
 
     def test_others_cannot_change_images(self):
@@ -115,3 +119,28 @@ class WishlistTests(APITestCase):
         other = make_customer('Oth', 'Er')
         self.client.force_authenticate(other.user)
         self.assertEqual(self.client.get('/core/wishlist/ids/').json(), [])
+
+
+class HomeTests(APITestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.delete('landing:home')
+        self.sell = make_seller()
+        self.cat = models.Category.objects.get_or_create(slug='t-home', defaults={'name_en': 'Home', 'name_ar': 'منزل'})[0]
+
+    def test_home_is_public_and_lists_real_data(self):
+        item = make_product(self.sell, 'Lamp')
+        item.category = self.cat
+        item.save()
+        make_product(self.sell, 'SoldOut', inventory=0)
+        response = self.client.get('/core/home/')
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        counts = {c['slug']: c['product_count'] for c in body['categories']}
+        self.assertEqual(counts['t-home'], 1)
+        self.assertIn('Lamp', body['trending'])
+        self.assertNotIn('SoldOut', body['trending'])
+        self.assertEqual([p['name'] for p in body['sections'][0]['products']], ['Lamp'])
+        self.assertEqual(body['sections'][0]['category'], self.cat.id)
+        self.assertEqual(body['stores'][0]['id'], self.sell.id)
+        self.assertEqual(body['stats']['products'], 2)

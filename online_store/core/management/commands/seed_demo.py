@@ -66,7 +66,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--images', action='store_true',
-                            help='Download a placeholder picture per product from picsum.photos (needs internet).')
+                            help='Download placeholder product pictures, store logos and profile photos (needs internet).')
 
     @transaction.atomic
     def handle(self, *args, **opts):
@@ -86,6 +86,17 @@ class Command(BaseCommand):
                 user.save()
             sellers[store], _ = seller.objects.get_or_create(user=user, defaults={'store_name': store, 'phone_number': phone})
 
+        if opts['images']:
+            for s in sellers.values():
+                # Older seeds put the store logo in profile_image; move it over instead of downloading again.
+                if not s.store_image and (s.profile_image.name or '').startswith('store_'):
+                    s.store_image, s.profile_image = s.profile_image.name, None
+                    s.save(update_fields=['store_image', 'profile_image'])
+                if not s.store_image:
+                    self.add_logo(s)
+                if not s.profile_image:
+                    self.add_avatar(s, s.user.username)
+
         buyers = []
         for i, username in enumerate(REVIEWERS, 1):
             user, created = User.objects.get_or_create(
@@ -95,6 +106,8 @@ class Command(BaseCommand):
                 user.set_password(PASSWORD)
                 user.save()
             c, _ = customer.objects.get_or_create(user=user, defaults={'phone_number': f'0111000000{i}'})
+            if opts['images'] and not c.profile_image:
+                self.add_avatar(c, username)
             buyers.append(c)
 
         made = 0
@@ -115,19 +128,30 @@ class Command(BaseCommand):
             f'{made} products created ({len(PRODUCTS) - made} already existed), {len(SELLERS)} stores, {len(buyers)} buyers. '
             f'Demo login password: {PASSWORD}'))
 
-    def add_image(self, p):
-        url = f'https://picsum.photos/seed/p{p.pk}/600/600'
+    def fetch(self, url, label):
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        data = None
         for _ in range(3):
             try:
                 with urllib.request.urlopen(req, timeout=20) as r:
-                    data = r.read()
-                break
+                    return r.read()
             except (OSError, HTTPException) as e:  # IncompleteRead is an HTTPException, not an OSError
                 err = e
+        self.stderr.write(f'No image for {label}: {err!r}')
+
+    def add_logo(self, s):
+        data = self.fetch(f'https://picsum.photos/seed/store{s.pk}/300/300', s.store_name)
+        if data:
+            s.store_image.save(f'store_{s.pk}.jpg', ContentFile(data), save=True)
+
+    def add_avatar(self, account, username):
+        # Personal profile photo (seller owner or buyer); pravatar gives a stable face per username.
+        data = self.fetch(f'https://i.pravatar.cc/300?u={username}', username)
+        if data:
+            account.profile_image.save(f'avatar_{username}.jpg', ContentFile(data), save=True)
+
+    def add_image(self, p):
+        data = self.fetch(f'https://picsum.photos/seed/p{p.pk}/600/600', p.name)
         if data is None:
-            self.stderr.write(f'No image for {p.name}: {err!r}')
             return
         img = productImage(product=p)
         img.image.save(f'demo_{p.pk}.jpg', ContentFile(data), save=True)

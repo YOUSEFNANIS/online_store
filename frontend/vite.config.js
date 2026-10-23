@@ -5,11 +5,13 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(() => ({
   plugins: [
     vue(),
-    vueDevTools(),
-  ],
+    // The overlay is useful when explicitly requested, but adds more than 2 MB
+    // of development-only modules to every measured page load.
+    process.env.VITE_ENABLE_DEVTOOLS === 'true' && vueDevTools(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -22,4 +24,4 @@ export default defineConfig({
     usePolling: true,
   },
 },
-})
+}))

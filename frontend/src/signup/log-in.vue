@@ -2,6 +2,7 @@
     <div class="signup-container">
     <lang-switcher class="floating-lang" />
     <div class="signup-card">
+        <router-link to="/" class="brand"><img src="@/assets/logo.svg" :alt="$t('nav.logoAlt')" class="brand-logo" /></router-link>
         <h1 class="title">{{ $t('login.title') }}</h1>
 
         <form @submit.prevent="submitForm" novalidate>
@@ -155,7 +156,7 @@ export default {
                     const response = await api.post('/api/token/', this.form);
                     this.set_role(response.data['user_type'])
                     this.startchat();
-                    this.$router.push('/');
+                    this.$router.push(response.data['user_type'] === 'customer' ? '/products' : '/dashboard');
                 }
                 catch(error){
                     this.formError = this.describeError(error)
@@ -198,6 +199,8 @@ export default {
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-md);
 }
+.brand { display: flex; justify-content: center; margin-bottom: 12px; }
+.brand-logo { height: 56px; width: auto; }
 .title {
   text-align: center;
   font-size: 1.75rem;

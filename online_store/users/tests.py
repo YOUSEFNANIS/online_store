@@ -77,7 +77,7 @@ class SellerDirectoryTests(APITestCase):
         response = self.client.get('/signup/sellers/')
         self.assertEqual(response.status_code, 200)
         row = response.json()['results'][0]
-        self.assertEqual(set(row), {'id', 'store_name', 'name', 'profile_image', 'product_count', 'rating_avg', 'rating_count'})
+        self.assertEqual(set(row), {'id', 'store_name', 'store_image', 'product_count', 'rating_avg', 'rating_count'})
 
     def test_seller_and_anonymous_denied(self):
         self.assertIn(self.client.get('/signup/sellers/').status_code, (401, 403))

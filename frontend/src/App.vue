@@ -12,8 +12,10 @@
           <button class="error-close" :aria-label="$t('app.dismiss')" @click.stop="errorMessage = ''">&times;</button>
       </div>
       </transition>
-      <router-view class="page-content"  @saved="showBanner"></router-view>
-      
+      <router-view :class="['page-content', { 'page-content--full': isLanding }]"  @saved="showBanner"></router-view>
+      <footer v-if="showNavBar && !isLanding" class="site-footer">
+        <router-link to="/terms">{{ $t('nav.terms') }}</router-link>
+      </footer>
       <verify-banner v-if="showNavBar"></verify-banner>
       <chat-bot></chat-bot>
     </div>
@@ -61,6 +63,10 @@ export default {
         return true
       }
     },
+    // Landing page has its own full-width layout and footer under the app navbar.
+    isLanding(){
+      return this.$route.path === '/'
+    },
   },
   methods: {
     
@@ -87,6 +93,12 @@ export default {
 
 
 <style>
+/* Expanded height of the market header per breakpoint (rows 1-3, rows 2+3, phone row + search row).
+   market-header.vue publishes the live, scroll-collapsed height as --app-bar-live-h. */
+:root { --app-bar-h: 164px; }
+@media (max-width: 1023px) { :root { --app-bar-h: 128px; } }
+@media (max-width: 767px) { :root { --app-bar-h: 126px; } }
+
 a {
   text-decoration: none;
   font-weight: 600;
@@ -98,13 +110,28 @@ a {
   width: 90%;
   height: 90%;
   position: relative;
-  margin: 5% 0 0 0;/* same as navbar height */
+  margin: var(--app-bar-h) 0 0 0;/* same as navbar height */
 }
+/* No side menu on the landing page, so it spans the full width with no gaps. */
+.page-content--full {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.site-footer {
+  width: 100%;
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.site-footer a { color: var(--color-text-muted); }
+.site-footer a:hover { color: var(--color-primary); }
 
 .success-banner,
 .error-banner {
   position: fixed;
-  top: 9.6%; /* below navbar */
+  top: var(--app-bar-live-h, var(--app-bar-h)); /* below navbar */
   inset-inline-start: 0;
   width: 100%;
   text-align: center;
